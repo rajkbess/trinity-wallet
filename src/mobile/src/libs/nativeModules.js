@@ -1,5 +1,8 @@
-import { NativeModules } from 'react-native';
+import { NativeEventEmitter, NativeModules } from 'react-native';
 import { isAndroid, isIOS } from 'libs/device';
+
+
+let addressEventEmitter = null;
 
 /**
  * Gets single address generation function
@@ -21,11 +24,13 @@ export const getAddressGenFn = () => {
  */
 export const getMultiAddressGenFn = () => {
     let genFn = null;
+    addressEventEmitter = new NativeEventEmitter(NativeModules.EntangledIOS);
     if (isAndroid) {
         genFn = NativeModules.EntangledAndroid.generateAddresses;
     } else if (isIOS) {
         genFn = NativeModules.EntangledIOS.generateAddresses;
     }
+    const subscription = addressEventEmitter.addListener('AddressesGenerated', (addresses) => console.log(addresses));
     return genFn;
 };
 

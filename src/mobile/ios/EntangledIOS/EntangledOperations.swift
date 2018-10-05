@@ -13,15 +13,15 @@ enum BatchState {
 }
 
 // MARK: Address generation
-public class AddressBatch {
-  let seed: UnsafePointer<CChar>
+@objc public class AddressBatch: NSObject {
+  let seed: UnsafeMutableRawPointer
   let index: Int
   let security: Int
   let total: Int
   var addresses: [String] = []
   var state = BatchState.pending
-  init(_ seed: UnsafePointer<CChar>, index: Int, security: Int, total: Int) {
-    self.seed = seed
+  @objc init(seed: UnsafePointer<CChar>, index: Int, security: Int, total: Int) {
+    memcpy(self.seed, seed, strlen(seed))
     self.index = index
     self.security = security
     self.total = total
@@ -42,6 +42,7 @@ class AddressGenerator: Operation {
     }
     
     var i = 0
+    let addressSeed = addressBatch.seed.load(as: UnsafePointer<CChar>.self)
     var addressIndex = CInt(addressBatch.index)
     let addressSecurity = CInt(addressBatch.security)
     var addresses = addressBatch.addresses
@@ -50,7 +51,7 @@ class AddressGenerator: Operation {
       if isCancelled {
         return
       }
-      let address = generateAddress(addressBatch.seed, addressIndex, addressSecurity)
+      let address = generateAddress(addressSeed, addressIndex, addressSecurity)
       let addressString = String.init(cString: address!)
       addresses.append(addressString)
       i += 1
@@ -73,14 +74,18 @@ var addressGenerationQueue: OperationQueue = {
   return queue
 }()
 
-func generateAddresses(for addressBatch: AddressBatch) {
-  let addressGenerator = AddressGenerator(addressBatch: addressBatch)
-  
-  addressGenerator.completionBlock = {
-    if addressGenerator.isCancelled {
-      return
+@objc public class GenerateAddresses: NSObject {
+  @objc func generateAddresses(addressBatch: AddressBatch) {
+    let addressGenerator = AddressGenerator(addressBatch: addressBatch)
+    
+    addressGenerator.completionBlock = {
+      if addressGenerator.isCancelled {
+        return
+      }
+      let entangledIOS = EntangledIOS()
+      entangledIOS.addressesGenerated(addressBatch.addresses)
     }
+    
+    addressGenerationQueue.addOperation(addressGenerator)
   }
-  
-  addressGenerationQueue.addOperation(addressGenerator)
 }

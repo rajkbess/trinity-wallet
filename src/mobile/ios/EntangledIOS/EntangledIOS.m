@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import "EntangledIOS.h"
+#import "iotaWallet-Swift.h"
 
 @implementation EntangledIOS
 
@@ -21,6 +22,7 @@ RCT_EXPORT_MODULE();
 - (void)addressesGenerated:(NSArray *)addresses
 {
   [self sendEventWithName:@"AddressesGenerated" body:addresses];
+  NSLog(@"%@", addresses);
 }
 
 // Hashing
@@ -79,7 +81,10 @@ RCT_EXPORT_METHOD(generateAddresses:(NSString *)seed index:(int)index security:(
 // Start multi address generation with Operation/OperationQueue
 RCT_EXPORT_METHOD(generateAddresses:(NSString *)seed index:(NSInteger)index security:(NSInteger)security total:(NSInteger)total)
 {
-  
+  char * seedChars = [seed cStringUsingEncoding:NSUTF8StringEncoding];
+  AddressBatch * addressBatch = [[AddressBatch alloc] initWithSeed:seedChars index:index security:security total:total];
+  GenerateAddresses * generateAddresses = [GenerateAddresses new];
+  [generateAddresses generateAddressesWithAddressBatch:addressBatch];
 }
 
 // Signature generation

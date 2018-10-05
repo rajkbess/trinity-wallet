@@ -11,4 +11,6 @@
 
 @interface EntangledIOS: RCTEventEmitter <RCTBridgeModule>
 
+- (void)addressesGenerated:(NSArray *)addresses;
+
 @end
