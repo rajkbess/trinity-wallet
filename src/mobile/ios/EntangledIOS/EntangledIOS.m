@@ -12,6 +12,17 @@
 
 RCT_EXPORT_MODULE();
 
+- (NSArray<NSString *> *)supportedEvents
+{
+  NSArray * array = @[@"AddressesGenerated"];
+  return array;
+}
+
+- (void)addressesGenerated:(NSArray *)addresses
+{
+  [self sendEventWithName:@"AddressesGenerated" body:addresses];
+}
+
 // Hashing
 RCT_EXPORT_METHOD(getDigest:(NSString *)trytes resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
@@ -42,6 +53,7 @@ RCT_EXPORT_METHOD(generateAddress:(NSString *)seed index:(int)index security:(in
   resolve([NSString stringWithFormat:@"%s", address]);
 }
 
+/*
 // Multi address generation
 RCT_EXPORT_METHOD(generateAddresses:(NSString *)seed index:(int)index security:(int)security total:(int)total resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
@@ -61,6 +73,13 @@ RCT_EXPORT_METHOD(generateAddresses:(NSString *)seed index:(int)index security:(
     memset_s(seedChars, strlen(seedChars), 0, strlen(seedChars));
     resolve(addresses);
   });
+}
+ */
+
+// Start multi address generation with Operation/OperationQueue
+RCT_EXPORT_METHOD(generateAddresses:(NSString *)seed index:(NSInteger)index security:(NSInteger)security total:(NSInteger)total)
+{
+  
 }
 
 // Signature generation
