@@ -885,42 +885,50 @@ export const performPow = (
     // Order transaction objects in descending to make sure it starts from remainder object.
     const sortedTransactionObjects = orderBy(transactionObjects, 'currentIndex', ['desc']);
 
-    return reduce(
+    const result = transform(
         sortedTransactionObjects,
-        (promise, transaction, index) => {
-            return promise.then((result) => {
-                // Assign parent transactions (trunk and branch)
-                // Starting from the remainder transaction object (index = 0 in sortedTransactionObjects)
-                // - When index === 0 i.e. remainder transaction object
-                //    * Assign trunkTransaction with provided trunk transaction from (getTransactionsToApprove)
-                //    * Assign branchTransaction with provided branch transaction from (getTransactionsToApprove)
-                // - When index > 0 i.e. not remainder transaction objects
-                //    * Assign trunkTransaction with hash of previous transaction object
-                //    * Assign branchTransaction with provided trunk transaction from (getTransactionsToApprove)
-                const withParentTransactions = assign({}, transaction, {
-                    trunkTransaction: index ? head(result.transactionObjects).hash : trunkTransaction,
-                    branchTransaction: index ? trunkTransaction : branchTransaction,
-                });
+        (result, transaction, index) => {
+            // Assign parent transactions (trunk and branch)
+            // Starting from the remainder transaction object (index = 0 in sortedTransactionObjects)
+            // - When index === 0 i.e. remainder transaction object
+            //    * Assign trunkTransaction with provided trunk transaction from (getTransactionsToApprove)
+            //    * Assign branchTransaction with provided branch transaction from (getTransactionsToApprove)
+            // - When index > 0 i.e. not remainder transaction objects
+            //    * Assign trunkTransaction with hash of previous transaction object
+            //    * Assign branchTransaction with provided trunk transaction from (getTransactionsToApprove)
+            const withParentTransactions = assign({}, transaction, {
+                trunkTransaction: index ? head(result.transactionObjects).hash : trunkTransaction,
+                branchTransaction: index ? trunkTransaction : branchTransaction,
+            });
 
-                const transactionTryteString = iota.utils.transactionTrytes(withParentTransactions);
-
-                return powFn(transactionTryteString, minWeightMagnitude)
-                    .then((nonce) => {
-                        const trytesWithNonce = transactionTryteString.substr(0, 2673 - nonce.length).concat(nonce);
+            const transactionTryteString = iota.utils.transactionTrytes(withParentTransactions);
+            result.trytes.unshift(transactionTryteString);
+        },
+        { trytes: [], transactionObjects: [] },
+    );
+    console.log(result);
+    return powFn(result.trytes, minWeightMagnitude)
+        .then((nonces) => {
+            console.log(nonces);
+            return reduce(
+                nonces,
+                (promise, nonce, index) => {
+                    return promise.then(() => {
+                        const trytesWithNonce = result.trytes[index].substr(0, 2673 - nonce.length).concat(nonce);
 
                         result.trytes.unshift(trytesWithNonce);
 
                         return nativeBindings.asyncTransactionObject(trytesWithNonce);
-                    })
-                    .then((tx) => {
-                        result.transactionObjects.unshift(tx);
-
-                        return result;
                     });
-            });
-        },
-        Promise.resolve({ trytes: [], transactionObjects: [] }),
-    );
+                },
+                Promise.resolve([]),
+            );
+        })
+        .then((tx) => {
+            result.transactionObjects.unshift(tx);
+
+            return Promise.resolve(result);
+        });
 };
 
 /**

@@ -714,6 +714,7 @@ export const makeTransaction = (seed, receiveAddress, value, message, accountNam
             })
             .catch((error) => {
                 dispatch(sendTransferError());
+                console.log(error);
 
                 // Only keep the failed trytes locally if the bundle was valid
                 // In case the bundle is invalid, discard the signing as it was never broadcast
