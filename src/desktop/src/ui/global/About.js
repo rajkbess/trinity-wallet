@@ -59,6 +59,13 @@ class About extends React.PureComponent {
 
                     <article>
                         <Scrollbar>
+                            <h5>0.4.2</h5>
+                            <ul>
+                                <li>- Update: Require manual address generation</li>
+                                <li>- Update: Disallow Node.js runtime debugging mode</li>
+                                <li>- Update: Add indicator for over 81 char on seed field</li>
+                                <li>- Fix: Wrong spent address status check condition</li>
+                            </ul>
                             <h5>0.4.1</h5>
                             <ul>
                                 <li>- Update: Complete address tooltip on Send page address input</li>
