@@ -1,25 +1,23 @@
 import React from 'react';
 import { withNamespaces } from 'react-i18next';
-import { StyleSheet, View, Text, TouchableWithoutFeedback, StatusBar, Keyboard } from 'react-native';
-import { setOnboardingSeed } from 'shared-modules/actions/ui';
+import { StyleSheet, View, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { navigator } from 'libs/navigation';
+import { setOnboardingSeed, toggleModalActivity } from 'shared-modules/actions/ui';
+import { setAccountInfoDuringSetup } from 'shared-modules/actions/accounts';
 import { VALID_SEED_REGEX, MAX_SEED_LENGTH } from 'shared-modules/libs/iota/utils';
 import { generateAlert } from 'shared-modules/actions/alerts';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import Modal from 'react-native-modal';
 import FlagSecure from 'react-native-flag-secure-android';
 import WithUserActivity from 'ui/components/UserActivity';
 import CustomTextInput from 'ui/components/CustomTextInput';
 import InfoBox from 'ui/components/InfoBox';
-import StatefulDropdownAlert from 'ui/components/StatefulDropdownAlert';
-import QRScannerComponent from 'ui/components/QrScanner';
-import OnboardingButtons from 'ui/components/OnboardingButtons';
+import DualFooterButtons from 'ui/components/DualFooterButtons';
 import SeedVaultImport from 'ui/components/SeedVaultImportComponent';
-import PasswordValidation from 'ui/components/PasswordValidationModal';
-import { width, height } from 'libs/dimensions';
-import { Icon } from 'ui/theme/icons';
-import { isAndroid, isIPhone11 } from 'libs/device';
-import GENERAL from 'ui/theme/general';
+import AnimatedComponent from 'ui/components/AnimatedComponent';
+import { width } from 'libs/dimensions';
+import { isAndroid } from 'libs/device';
+import { Styling } from 'ui/theme/general';
 import Header from 'ui/components/Header';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
@@ -32,16 +30,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     topContainer: {
-        flex: 1,
-        paddingTop: height / 16,
+        flex: 1.4,
         alignItems: 'center',
         justifyContent: 'flex-start',
     },
     midContainer: {
-        flex: 3,
+        flex: 2.6,
         alignItems: 'center',
         width,
-        justifyContent: 'flex-start',
+        justifyContent: 'space-between',
     },
     bottomContainer: {
         flex: 0.5,
@@ -50,33 +47,42 @@ const styles = StyleSheet.create({
     },
     infoText: {
         fontFamily: 'SourceSansPro-Light',
-        fontSize: GENERAL.fontSize3,
-        textAlign: 'left',
+        fontSize: Styling.fontSize3,
+        textAlign: 'center',
         backgroundColor: 'transparent',
     },
     warningText: {
         fontFamily: 'SourceSansPro-Bold',
-        fontSize: GENERAL.fontSize3,
-        textAlign: 'left',
+        fontSize: Styling.fontSize3,
+        textAlign: 'center',
         backgroundColor: 'transparent',
+    },
+    seedVaultImportContainer: {
+        flex: 0.5,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 });
 
 /** Enter seed component */
 class EnterSeed extends React.Component {
     static propTypes = {
+        /** Component ID */
+        componentId: PropTypes.string.isRequired,
         /** @ignore */
         generateAlert: PropTypes.func.isRequired,
         /** @ignore */
         t: PropTypes.func.isRequired,
         /** @ignore */
         setOnboardingSeed: PropTypes.func.isRequired,
-        /** Navigation object */
-        navigator: PropTypes.object.isRequired,
         /** @ignore */
         theme: PropTypes.object.isRequired,
         /** Determines if the application is minimised */
         minimised: PropTypes.bool.isRequired,
+        /** @ignore */
+        toggleModalActivity: PropTypes.func.isRequired,
+        /** @ignore */
+        setAccountInfoDuringSetup: PropTypes.func.isRequired,
     };
 
     constructor(props) {
@@ -84,7 +90,6 @@ class EnterSeed extends React.Component {
 
         this.state = {
             seed: '',
-            isModalVisible: false,
         };
     }
 
@@ -105,32 +110,38 @@ class EnterSeed extends React.Component {
      * Validate seed
      */
     onDonePress() {
-        const { t, theme } = this.props;
+        const { t, theme: { body } } = this.props;
         const { seed } = this.state;
         if (!seed.match(VALID_SEED_REGEX) && seed.length === MAX_SEED_LENGTH) {
             this.props.generateAlert('error', t('invalidCharacters'), t('invalidCharactersExplanation'));
-        } else if (seed.length < MAX_SEED_LENGTH) {
+        } else if (seed.length !== MAX_SEED_LENGTH) {
             this.props.generateAlert(
                 'error',
-                t('seedTooShort'),
+                seed.length > MAX_SEED_LENGTH ? t('seedTooLong') : t('seedTooShort'),
                 t('seedTooShortExplanation', { maxLength: MAX_SEED_LENGTH, currentLength: seed.length }),
             );
-        } else if (seed.length === MAX_SEED_LENGTH) {
+        } else {
             if (isAndroid) {
                 FlagSecure.deactivate();
             }
             this.props.setOnboardingSeed(seed, true);
-            this.props.navigator.push({
-                screen: 'setAccountName',
-                navigatorStyle: {
-                    navBarHidden: true,
-                    navBarTransparent: true,
-                    drawUnderStatusBar: true,
-                    topBarElevationShadowEnabled: false,
-                    statusBarColor: theme.body.bg,
-                    screenBackgroundColor: theme.body.bg,
+            // Since this seed was not generated in Trinity, mark "usedExistingSeed" as true.
+            this.props.setAccountInfoDuringSetup({ usedExistingSeed: true });
+            navigator.push('setAccountName', {
+                animations: {
+                    push: {
+                        enable: false,
+                    },
+                    pop: {
+                        enable: false,
+                    },
                 },
-                animated: false,
+                layout: {
+                    backgroundColor: body.bg,
+                },
+                statusBar: {
+                    backgroundColor: body.bg,
+                },
             });
         }
     }
@@ -140,9 +151,7 @@ class EnterSeed extends React.Component {
      * @method onBackPress
      */
     onBackPress() {
-        this.props.navigator.pop({
-            animated: false,
-        });
+        navigator.pop(this.props.componentId);
     }
 
     /**
@@ -150,7 +159,7 @@ class EnterSeed extends React.Component {
      * @method onQRPress
      */
     onQRPress() {
-        this.showModal('qr');
+        this.showModal('qrScanner');
     }
 
     /**
@@ -176,45 +185,28 @@ class EnterSeed extends React.Component {
         this.hideModal();
     }
 
-    showModal = (modalContent) => this.setState({ modalContent, isModalVisible: true });
+    hideModal = () => this.props.toggleModalActivity();
 
-    hideModal = () => this.setState({ isModalVisible: false });
-
-    handleKeyPress = (event) => {
-        if (event.key === 'Enter') {
-            Keyboard.dismiss();
-        }
-    };
-
-    renderModalContent = (modalContent) => {
-        const { theme, theme: { body, primary } } = this.props;
-        let content = '';
+    showModal = (modalContent) => {
+        const { theme } = this.props;
         switch (modalContent) {
-            case 'qr':
-                content = (
-                    <QRScannerComponent
-                        primary={primary}
-                        body={body}
-                        onQRRead={(data) => this.onQRRead(data)}
-                        hideModal={() => this.hideModal()}
-                    />
-                );
-                break;
+            case 'qrScanner':
+                return this.props.toggleModalActivity(modalContent, {
+                    theme,
+                    onQRRead: (data) => this.onQRRead(data),
+                    hideModal: () => this.props.toggleModalActivity(),
+                });
             case 'passwordValidation':
-                content = (
-                    <PasswordValidation
-                        validatePassword={(password) => this.SeedVaultImport.validatePassword(password)}
-                        hideModal={() => this.hideModal()}
-                        theme={theme}
-                    />
-                );
-                break;
+                return this.props.toggleModalActivity(modalContent, {
+                    validatePassword: (password) => this.SeedVaultImport.validatePassword(password),
+                    hideModal: () => this.props.toggleModalActivity(),
+                    theme,
+                });
         }
-        return content;
     };
 
     render() {
-        const { seed, modalContent, isModalVisible } = this.state;
+        const { seed } = this.state;
         const { t, theme, minimised } = this.props;
 
         return (
@@ -222,37 +214,66 @@ class EnterSeed extends React.Component {
                 <View style={[styles.container, { backgroundColor: theme.body.bg }]}>
                     {!minimised && (
                         <View>
-                            <StatusBar barStyle="light-content" backgroundColor={theme.body.bg} />
                             <View style={styles.topContainer}>
-                                <Icon name="iota" size={width / 8} color={theme.body.color} />
-                                <View style={{ flex: 0.7 }} />
-                                <Header textColor={theme.body.color}>{t('seedReentry:enterYourSeed')}</Header>
+                                <AnimatedComponent
+                                    animationInType={['slideInRight', 'fadeIn']}
+                                    animationOutType={['slideOutLeft', 'fadeOut']}
+                                    delay={400}
+                                >
+                                    <Header textColor={theme.body.color}>{t('seedReentry:enterYourSeed')}</Header>
+                                </AnimatedComponent>
                             </View>
                             <View style={styles.midContainer}>
-                                <View style={{ flex: 0.15 }} />
-                                <CustomTextInput
-                                    label={t('global:seed')}
-                                    onChangeText={(text) => {
-                                        if (text.match(VALID_SEED_REGEX) || text.length === 0) {
-                                            this.setState({ seed: text.toUpperCase() });
-                                        }
-                                    }}
-                                    containerStyle={{ width: width / 1.15 }}
-                                    theme={theme}
-                                    autoCapitalize="characters"
-                                    autoCorrect={false}
-                                    enablesReturnKeyAutomatically
-                                    returnKeyType="done"
-                                    onSubmitEditing={() => this.onDonePress()}
-                                    maxLength={MAX_SEED_LENGTH}
-                                    value={seed}
-                                    widget="qr"
-                                    onQRPress={() => this.onQRPress()}
-                                    testID="enterSeed-seedbox"
-                                    seed={seed}
-                                />
-                                <View style={{ flex: 0.4 }} />
-                                {!isIPhone11 && (
+                                <AnimatedComponent
+                                    animationInType={['slideInRight', 'fadeIn']}
+                                    animationOutType={['slideOutLeft', 'fadeOut']}
+                                    delay={300}
+                                >
+                                    <InfoBox>
+                                        <Text style={[styles.infoText, { color: theme.body.color }]}>
+                                            {t('seedExplanation', { maxLength: MAX_SEED_LENGTH })}
+                                        </Text>
+                                        <Text style={[styles.warningText, { color: theme.body.color }]}>
+                                            {'\n'}
+                                            {t('neverShare')}
+                                        </Text>
+                                    </InfoBox>
+                                </AnimatedComponent>
+                                <View style={{ flex: 0.5 }} />
+                                <AnimatedComponent
+                                    animationInType={['slideInRight', 'fadeIn']}
+                                    animationOutType={['slideOutLeft', 'fadeOut']}
+                                    delay={200}
+                                >
+                                    <CustomTextInput
+                                        label={t('global:seed')}
+                                        onChangeText={(text) => {
+                                            if (text.match(VALID_SEED_REGEX) || text.length === 0) {
+                                                this.setState({ seed: text.toUpperCase() });
+                                            }
+                                        }}
+                                        theme={theme}
+                                        autoCapitalize="characters"
+                                        autoCorrect={false}
+                                        enablesReturnKeyAutomatically
+                                        returnKeyType="done"
+                                        onSubmitEditing={() => this.onDonePress()}
+                                        maxLength={MAX_SEED_LENGTH}
+                                        value={seed}
+                                        widget="qr"
+                                        onQRPress={() => this.onQRPress()}
+                                        testID="enterSeed-seedbox"
+                                        seed={seed}
+                                        isSeedInput
+                                    />
+                                </AnimatedComponent>
+                                <View style={{ flex: 0.1 }} />
+                                <AnimatedComponent
+                                    animationInType={['slideInRight', 'fadeIn']}
+                                    animationOutType={['slideOutLeft', 'fadeOut']}
+                                    delay={100}
+                                    style={styles.seedVaultImportContainer}
+                                >
                                     <SeedVaultImport
                                         openPasswordValidationModal={() => this.showModal('passwordValidation')}
                                         onSeedImport={(seed) => {
@@ -263,54 +284,25 @@ class EnterSeed extends React.Component {
                                             this.SeedVaultImport = ref;
                                         }}
                                     />
-                                )}
-                                <View style={{ flex: 0.4 }} />
-                                <InfoBox
-                                    body={theme.body}
-                                    text={
-                                        <View>
-                                            <Text style={[styles.infoText, { color: theme.body.color }]}>
-                                                {t('seedExplanation', { maxLength: MAX_SEED_LENGTH })}
-                                            </Text>
-                                            <Text style={[styles.warningText, { color: theme.body.color }]}>
-                                                {'\n'}
-                                                {t('neverShare')}
-                                            </Text>
-                                        </View>
-                                    }
-                                />
-                                <View style={{ flex: 0.7 }} />
+                                </AnimatedComponent>
+                                <View style={{ flex: 0.6 }} />
                             </View>
                             <View style={styles.bottomContainer}>
-                                <OnboardingButtons
-                                    onLeftButtonPress={() => this.onBackPress()}
-                                    onRightButtonPress={() => this.onDonePress()}
-                                    leftButtonText={t('global:goBack')}
-                                    rightButtonText={t('global:continue')}
-                                    leftButtonTestID="enterSeed-back"
-                                    rightButtonTestID="enterSeed-next"
-                                />
+                                <AnimatedComponent
+                                    animationInType={['fadeIn']}
+                                    animationOutType={['fadeOut']}
+                                    delay={0}
+                                >
+                                    <DualFooterButtons
+                                        onLeftButtonPress={() => this.onBackPress()}
+                                        onRightButtonPress={() => this.onDonePress()}
+                                        leftButtonText={t('global:goBack')}
+                                        rightButtonText={t('global:continue')}
+                                        leftButtonTestID="enterSeed-back"
+                                        rightButtonTestID="enterSeed-next"
+                                    />
+                                </AnimatedComponent>
                             </View>
-                            {!isModalVisible && (
-                                <StatefulDropdownAlert textColor="white" backgroundColor={theme.body.bg} />
-                            )}
-                            <Modal
-                                animationIn={isAndroid ? 'bounceInUp' : 'zoomIn'}
-                                animationOut={isAndroid ? 'bounceOut' : 'zoomOut'}
-                                animationInTiming={isAndroid ? 1000 : 300}
-                                animationOutTiming={200}
-                                backdropTransitionInTiming={isAndroid ? 500 : 300}
-                                backdropTransitionOutTiming={200}
-                                backdropColor={theme.body.bg}
-                                backdropOpacity={0.9}
-                                style={{ height, width, justifyContent: 'center', alignItems: 'center', margin: 0 }}
-                                isVisible={this.state.isModalVisible}
-                                onBackButtonPress={() => this.setState({ isModalVisible: false })}
-                                hideModalContentWhileAnimating
-                                useNativeDriver={isAndroid ? true : false}
-                            >
-                                {this.renderModalContent(modalContent)}
-                            </Modal>
                         </View>
                     )}
                 </View>
@@ -327,6 +319,8 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = {
     setOnboardingSeed,
     generateAlert,
+    toggleModalActivity,
+    setAccountInfoDuringSetup,
 };
 
 export default WithUserActivity()(

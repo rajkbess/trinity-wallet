@@ -1,7 +1,7 @@
 export default {
     chart: { color: 'rgb(0, 0, 0)' },
     box: { bg: 'rgb(251, 251, 251)', alt: 'rgb(231, 231, 231)', body: 'rgb(0, 0, 0)' },
-    bar: { bg: 'rgb(242, 242, 242)', hover: 'rgb(231, 231, 231)', alt: 'rgb(231, 231, 231)', color: 'rgb(0, 0, 0)' },
+    bar: { bg: 'rgb(242, 242, 242)', hover: 'rgb(251, 251, 251)', alt: 'rgb(231, 231, 231)', color: 'rgb(0, 0, 0)' },
     label: { color: 'rgb(0, 0, 0)', hover: 'rgb(0, 0, 0)' },
     input: {
         bg: 'rgb(251, 251, 251)',
@@ -17,4 +17,5 @@ export default {
     primary: { color: 'rgb(0, 0, 0)', hover: 'rgb(51, 51, 51)', border: 'rgb(0, 0, 0)', body: 'rgb(242, 242, 242)' },
     body: { bg: 'rgb(242, 242, 242)', color: 'rgb(0, 0, 0)', alt: 'rgba(0, 0, 0, 0.15)' },
     wave: { primary: 'rgba(0, 0, 0, 0.05)', secondary: 'rgba(0, 0, 0, 0.05)' },
+    isDark: false,
 };

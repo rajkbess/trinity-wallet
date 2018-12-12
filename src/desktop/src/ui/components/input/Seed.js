@@ -8,11 +8,11 @@ import { withI18n } from 'react-i18next';
 
 import { MAX_SEED_LENGTH, VALID_SEED_REGEX } from 'libs/iota/utils';
 import { MAX_ACC_LENGTH } from 'libs/crypto';
-import { byteToChar, charToByte } from 'libs/helpers';
+import { byteToChar, charToByte } from 'libs/iota/converter';
 
 import { generateAlert } from 'actions/alerts';
-import { setAdditionalAccountInfo } from 'actions/wallet';
 
+import { setAccountInfoDuringSetup } from 'actions/accounts';
 import Modal from 'ui/components/modal/Modal';
 import Password from 'ui/components/modal/Password';
 import Button from 'ui/components/Button';
@@ -40,7 +40,7 @@ class SeedInput extends React.PureComponent {
          */
         onChange: PropTypes.func.isRequired,
         /** @ignore */
-        setAdditionalAccountInfo: PropTypes.func.isRequired,
+        setAccountInfoDuringSetup: PropTypes.func.isRequired,
         /** Should the onboarding name be updated to imported SeedVault account name */
         updateImportName: PropTypes.bool,
         /** Create a notification message
@@ -110,11 +110,12 @@ class SeedInput extends React.PureComponent {
     };
 
     onDrop = async (buffer) => {
+        const { t } = this.props;
         if (!buffer) {
             return this.props.generateAlert(
                 'error',
-                'Error opening keystore file',
-                'There was an error opening keystore file',
+                t('seedVault:seedFileError'),
+                t('seedVault:seedFileErrorExplanation'),
             );
         }
 
@@ -169,7 +170,7 @@ class SeedInput extends React.PureComponent {
     };
 
     decryptFile = async (password) => {
-        const { generateAlert, setAdditionalAccountInfo, updateImportName, t } = this.props;
+        const { generateAlert, updateImportName, t } = this.props;
 
         try {
             let accounts = await Electron.importSeed(this.state.importBuffer, password);
@@ -192,11 +193,7 @@ class SeedInput extends React.PureComponent {
                 this.props.onChange(accounts[0].seed);
 
                 if (updateImportName && accounts[0].title.length < MAX_ACC_LENGTH) {
-                    setAdditionalAccountInfo({
-                        addingAdditionalAccount: true,
-                        additionalAccountName: accounts[0].title,
-                        additionalAccountType: 'keychain',
-                    });
+                    this.props.setAccountInfoDuringSetup({ name: accounts[0].title });
                 }
             } else {
                 this.setState({
@@ -208,7 +205,7 @@ class SeedInput extends React.PureComponent {
             Electron.garbageCollect();
         } catch (error) {
             if (error.code === 'InvalidKey') {
-                generateAlert('error', t('unrecognisedPassword'), t('unrecognisedPasswordExplanation'));
+                generateAlert('error', t('seedVault:unrecognisedKey'), t('seedVault:unrecognisedKeyExplanation'));
             } else if (error.message === 'SeedNotFound') {
                 generateAlert('error', t('seedVault:noSeedFound'), t('seedVault:noSeedFoundExplanation'));
             } else {
@@ -224,11 +221,7 @@ class SeedInput extends React.PureComponent {
         this.props.onChange(account.seed);
 
         if (this.props.updateImportName && account.title.length < MAX_ACC_LENGTH) {
-            this.props.setAdditionalAccountInfo({
-                addingAdditionalAccount: true,
-                additionalAccountName: account.title,
-                additionalAccountType: 'keychain',
-            });
+            this.props.setAccountInfoDuringSetup({ name: account.title });
         }
 
         this.setState({
@@ -268,10 +261,6 @@ class SeedInput extends React.PureComponent {
                     seed.splice(Math.min(...cursor), Math.abs(cursor[0] - cursor[1]), byte);
                 }
 
-                if (seed.length > MAX_SEED_LENGTH) {
-                    return;
-                }
-
                 this.setState({
                     cursor: seed.length ? cursorPos : 0,
                 });
@@ -285,7 +274,10 @@ class SeedInput extends React.PureComponent {
         const { seed, label, closeLabel, t } = this.props;
         const { importBuffer, accounts, accountIndex, showScanner, hidden } = this.state;
 
-        const checkSum = seed.length < MAX_SEED_LENGTH ? '< 81' : Electron.getChecksum(seed);
+        const checkSum =
+            seed.length < MAX_SEED_LENGTH
+                ? '< 81'
+                : seed.length > MAX_SEED_LENGTH ? '> 81' : Electron.getChecksum(seed);
 
         return (
             <div className={classNames(css.input, css.seed)}>
@@ -340,7 +332,7 @@ class SeedInput extends React.PureComponent {
                     <Password
                         content={{
                             title: t('enterPassword'),
-                            message: t('seedVault:enterPasswordExplanation'),
+                            message: t('seedVault:enterKeyExplanation'),
                             confirm: t('seedVault:importSeedVault'),
                         }}
                         isOpen
@@ -383,7 +375,7 @@ class SeedInput extends React.PureComponent {
 
 const mapDispatchToProps = {
     generateAlert,
-    setAdditionalAccountInfo,
+    setAccountInfoDuringSetup,
 };
 
 export default connect(null, mapDispatchToProps)(withI18n()(SeedInput));

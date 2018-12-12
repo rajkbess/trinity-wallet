@@ -6,14 +6,14 @@ import { connect } from 'react-redux';
 import { setSetting } from 'shared-modules/actions/wallet';
 import { generateAlert } from 'shared-modules/actions/alerts';
 import { shouldPreventAction } from 'shared-modules/selectors/global';
-import { getSelectedAccountName, getSelectedAccountType } from 'shared-modules/selectors/accounts';
+import { getSelectedAccountName, getSelectedAccountMeta } from 'shared-modules/selectors/accounts';
 import { manuallySyncAccount } from 'shared-modules/actions/accounts';
 import SeedStore from 'libs/SeedStore';
 import { width, height } from 'libs/dimensions';
 import { Icon } from 'ui/theme/icons';
 import CtaButton from 'ui/components/CtaButton';
 import InfoBox from 'ui/components/InfoBox';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
 const styles = StyleSheet.create({
@@ -45,19 +45,19 @@ const styles = StyleSheet.create({
     },
     titleText: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         marginLeft: width / 20,
     },
     syncButtonContainer: {
-        flex: 1,
+        flex: 0.7,
         alignItems: 'center',
         justifyContent: 'center',
     },
     infoText: {
         fontFamily: 'SourceSansPro-Light',
-        fontSize: GENERAL.fontSize3,
-        textAlign: 'left',
+        fontSize: Styling.fontSize3,
+        textAlign: 'center',
         backgroundColor: 'transparent',
     },
     activityIndicator: {
@@ -85,8 +85,8 @@ export class ManualSync extends Component {
         password: PropTypes.object.isRequired,
         /** Account name for selected account */
         selectedAccountName: PropTypes.string.isRequired,
-        /** Account name for selected account */
-        selectedAccountType: PropTypes.string.isRequired,
+        /** Account meta for selected account */
+        selectedAccountMeta: PropTypes.object.isRequired,
         /** @ignore */
         generateAlert: PropTypes.func.isRequired,
         /** @ignore */
@@ -98,10 +98,10 @@ export class ManualSync extends Component {
     }
 
     sync() {
-        const { password, selectedAccountName, selectedAccountType, t, shouldPreventAction } = this.props;
+        const { password, selectedAccountName, selectedAccountMeta, t, shouldPreventAction } = this.props;
 
         if (!shouldPreventAction) {
-            const seedStore = new SeedStore[selectedAccountType](password, selectedAccountName);
+            const seedStore = new SeedStore[selectedAccountMeta.type](password, selectedAccountName);
             this.props.manuallySyncAccount(seedStore, selectedAccountName);
         } else {
             this.props.generateAlert('error', t('global:pleaseWait'), t('global:pleaseWaitExplanation'));
@@ -118,17 +118,12 @@ export class ManualSync extends Component {
                     <View style={{ flex: 0.8 }} />
                     {!isSyncing && (
                         <View style={styles.innerContainer}>
-                            <InfoBox
-                                body={body}
-                                text={
-                                    <View>
-                                        <Text style={[styles.infoText, textColor]}>{t('manualSync:outOfSync')}</Text>
-                                        <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
-                                            {t('manualSync:pressToSync')}
-                                        </Text>
-                                    </View>
-                                }
-                            />
+                            <InfoBox>
+                                <Text style={[styles.infoText, textColor]}>{t('manualSync:outOfSync')}</Text>
+                                <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
+                                    {t('manualSync:pressToSync')}
+                                </Text>
+                            </InfoBox>
                             <View style={styles.syncButtonContainer}>
                                 <CtaButton
                                     ctaColor={primary.color}
@@ -143,22 +138,15 @@ export class ManualSync extends Component {
                     )}
                     {isSyncing && (
                         <View style={styles.innerContainer}>
-                            <InfoBox
-                                body={body}
-                                text={
-                                    <View>
-                                        <Text style={[styles.infoText, textColor]}>
-                                            {t('manualSync:syncingYourAccount')}
-                                        </Text>
-                                        <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
-                                            {t('manualSync:thisMayTake')}
-                                        </Text>
-                                        <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
-                                            {t('manualSync:doNotClose')}
-                                        </Text>
-                                    </View>
-                                }
-                            />
+                            <InfoBox>
+                                <Text style={[styles.infoText, textColor]}>{t('manualSync:syncingYourAccount')}</Text>
+                                <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
+                                    {t('manualSync:thisMayTake')}
+                                </Text>
+                                <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
+                                    {t('manualSync:doNotClose')}
+                                </Text>
+                            </InfoBox>
                             <ActivityIndicator
                                 animating={isSyncing}
                                 style={styles.activityIndicator}
@@ -191,7 +179,7 @@ const mapStateToProps = (state) => ({
     password: state.wallet.password,
     theme: state.settings.theme,
     selectedAccountName: getSelectedAccountName(state),
-    selectedAccountType: getSelectedAccountType(state),
+    selectedAccountMeta: getSelectedAccountMeta(state),
     shouldPreventAction: shouldPreventAction(state),
 });
 

@@ -9,7 +9,7 @@ import CtaButton from 'ui/components/CtaButton';
 import NodeSelection from 'ui/views/wallet/NodeSelection';
 import AddCustomNode from 'ui/views/wallet/AddCustomNode';
 import { Icon } from 'ui/theme/icons';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
 const styles = StyleSheet.create({
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     titleTextLeft: {
         color: 'white',
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         marginLeft: width / 20,
     },
@@ -52,7 +52,7 @@ class NodeOptionsOnLogin extends Component {
         theme: PropTypes.object.isRequired,
         /** @ignore */
         setLoginRoute: PropTypes.func.isRequired,
-        /** @ignore */
+        /** Login route */
         loginRoute: PropTypes.string.isRequired,
     };
 
@@ -121,7 +121,6 @@ class NodeOptionsOnLogin extends Component {
 
 const mapStateToProps = (state) => ({
     theme: state.settings.theme,
-    loginRoute: state.ui.loginRoute,
 });
 
 const mapDispatchToProps = {

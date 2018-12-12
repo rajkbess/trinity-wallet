@@ -16,14 +16,14 @@ import {
 import { generateAlert } from 'shared-modules/actions/alerts';
 import {
     getSelectedAccountName,
-    getSelectedAccountType,
+    getSelectedAccountMeta,
     getAddressesForSelectedAccount,
 } from 'shared-modules/selectors/accounts';
 import KeepAwake from 'react-native-keep-awake';
 import { shouldPreventAction } from 'shared-modules/selectors/global';
 import { formatValue, formatUnit } from 'shared-modules/libs/iota/utils';
 import ModalButtons from 'ui/components/ModalButtons';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import SeedStore from 'libs/SeedStore';
 import { width, height } from 'libs/dimensions';
 import { Icon } from 'ui/theme/icons';
@@ -62,29 +62,29 @@ const styles = StyleSheet.create({
     },
     titleText: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         marginLeft: width / 20,
     },
     transitionButtonContainer: {
-        flex: 1,
+        flex: 0.7,
         alignItems: 'center',
         justifyContent: 'center',
     },
     buttonInfoText: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
     },
     infoText: {
         fontFamily: 'SourceSansPro-Light',
-        fontSize: GENERAL.fontSize3,
-        textAlign: 'left',
+        fontSize: Styling.fontSize3,
+        textAlign: 'center',
         backgroundColor: 'transparent',
     },
     buttonQuestionText: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         paddingTop: height / 60,
     },
@@ -128,8 +128,8 @@ class SnapshotTransition extends Component {
         completeSnapshotTransition: PropTypes.func.isRequired,
         /** Currently selected account name */
         selectedAccountName: PropTypes.string.isRequired,
-        /** Currently selected account type */
-        selectedAccountType: PropTypes.string.isRequired,
+        /** Currently selected account meta */
+        selectedAccountMeta: PropTypes.object.isRequired,
         /** @ignore */
         generateAlert: PropTypes.func.isRequired,
         /** @ignore */
@@ -151,12 +151,12 @@ class SnapshotTransition extends Component {
         cancelSnapshotTransition: PropTypes.func.isRequired,
     };
 
-    static renderProgressBarChildren(activeStepIndex, sizeOfActiveSteps) {
+    static renderProgressBarChildren(activeStepIndex, sizeOfActiveSteps, t) {
         if (activeStepIndex === -1) {
             return null;
         }
 
-        return `Attaching address ${activeStepIndex + 1} / ${sizeOfActiveSteps}`;
+        return t('attachProgress', { currentAddress: activeStepIndex + 1, totalAddresses: sizeOfActiveSteps });
     }
 
     constructor() {
@@ -182,9 +182,9 @@ class SnapshotTransition extends Component {
      * @method onBalanceCompletePress
      */
     onBalanceCompletePress() {
-        const { transitionAddresses, selectedAccountName, selectedAccountType, password } = this.props;
+        const { transitionAddresses, selectedAccountName, selectedAccountMeta, password } = this.props;
         setTimeout(() => {
-            const seedStore = new SeedStore[selectedAccountType](password, selectedAccountName);
+            const seedStore = new SeedStore[selectedAccountMeta.type](password, selectedAccountName);
             this.props.completeSnapshotTransition(seedStore, selectedAccountName, transitionAddresses, getPowFn());
         }, 300);
     }
@@ -194,11 +194,11 @@ class SnapshotTransition extends Component {
      * @method onBalanceIncompletePress
      */
     onBalanceIncompletePress() {
-        const { transitionAddresses, password, selectedAccountName, selectedAccountType } = this.props;
+        const { transitionAddresses, password, selectedAccountName, selectedAccountMeta } = this.props;
         const currentIndex = transitionAddresses.length;
         this.props.setBalanceCheckFlag(false);
         setTimeout(() => {
-            const seedStore = new SeedStore[selectedAccountType](password, selectedAccountName);
+            const seedStore = new SeedStore[selectedAccountMeta.type](password, selectedAccountName);
             this.props.generateAddressesAndGetBalance(seedStore, currentIndex);
         }, 300);
     }
@@ -209,9 +209,9 @@ class SnapshotTransition extends Component {
      * @method onSnapshotTransitionPress
      */
     onSnapshotTransitionPress() {
-        const { addresses, shouldPreventAction, password, selectedAccountName, selectedAccountType, t } = this.props;
+        const { addresses, shouldPreventAction, password, selectedAccountName, selectedAccountMeta, t } = this.props;
         if (!shouldPreventAction) {
-            const seedStore = new SeedStore[selectedAccountType](password, selectedAccountName);
+            const seedStore = new SeedStore[selectedAccountMeta.type](password, selectedAccountName);
             this.props.transitionForSnapshot(seedStore, addresses);
         } else {
             this.props.generateAlert('error', t('global:pleaseWait'), t('global:pleaseWaitExplanation'));
@@ -248,17 +248,12 @@ class SnapshotTransition extends Component {
                     <View style={{ flex: 0.8 }} />
                     {!isTransitioning && (
                         <View style={styles.innerContainer}>
-                            <InfoBox
-                                body={theme.body}
-                                text={
-                                    <View>
-                                        <Text style={[styles.infoText, textColor]}>{t('snapshotExplanation')}</Text>
-                                        <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
-                                            {t('hasSnapshotTakenPlace')}
-                                        </Text>
-                                    </View>
-                                }
-                            />
+                            <InfoBox>
+                                <Text style={[styles.infoText, textColor]}>{t('snapshotExplanation')}</Text>
+                                <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
+                                    {t('hasSnapshotTakenPlace')}
+                                </Text>
+                            </InfoBox>
                             <View style={styles.transitionButtonContainer}>
                                 <CtaButton
                                     ctaColor={theme.primary.color}
@@ -275,33 +270,29 @@ class SnapshotTransition extends Component {
                         !isAttachingToTangle && (
                             <View style={styles.innerContainer}>
                                 {(balanceCheckFlag && (
-                                    <InfoBox
-                                        body={theme.body}
-                                        width={width / 1.1}
-                                        text={
-                                            <View style={styles.balanceCheckContainer}>
-                                                <View style={styles.textContainer}>
-                                                    <Text style={[styles.buttonInfoText, textColor]}>
-                                                        {t('detectedBalance', {
-                                                            amount: round(formatValue(transitionBalance), 1),
-                                                            unit: formatUnit(transitionBalance),
-                                                        })}
-                                                    </Text>
-                                                    <Text style={[styles.buttonQuestionText, textColor]}>
-                                                        {t('isThisCorrect')}
-                                                    </Text>
-                                                </View>
-                                                <ModalButtons
-                                                    onLeftButtonPress={() => this.onBalanceIncompletePress()}
-                                                    onRightButtonPress={() => this.onBalanceCompletePress()}
-                                                    leftText={t('global:no')}
-                                                    rightText={t('global:yes')}
-                                                    containerWidth={{ width: width / 1.25 }}
-                                                    buttonWidth={{ width: width / 2.85 }}
-                                                />
+                                    <InfoBox>
+                                        <View style={styles.balanceCheckContainer}>
+                                            <View style={styles.textContainer}>
+                                                <Text style={[styles.buttonInfoText, textColor]}>
+                                                    {t('detectedBalance', {
+                                                        amount: round(formatValue(transitionBalance), 1),
+                                                        unit: formatUnit(transitionBalance),
+                                                    })}
+                                                </Text>
+                                                <Text style={[styles.buttonQuestionText, textColor]}>
+                                                    {t('isThisCorrect')}
+                                                </Text>
                                             </View>
-                                        }
-                                    />
+                                            <ModalButtons
+                                                onLeftButtonPress={() => this.onBalanceIncompletePress()}
+                                                onRightButtonPress={() => this.onBalanceCompletePress()}
+                                                leftText={t('global:no')}
+                                                rightText={t('global:yes')}
+                                                containerWidth={{ width: width / 1.25 }}
+                                                buttonWidth={{ width: width / 2.85 }}
+                                            />
+                                        </View>
+                                    </InfoBox>
                                 )) || (
                                     <ActivityIndicator
                                         animating={isTransitioning}
@@ -316,20 +307,15 @@ class SnapshotTransition extends Component {
                     {isTransitioning &&
                         isAttachingToTangle && (
                             <View style={styles.innerContainer}>
-                                <InfoBox
-                                    body={theme.body}
-                                    text={
-                                        <View>
-                                            <Text style={[styles.infoText, textColor]}>{t('attaching')}</Text>
-                                            <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
-                                                {t('loading:thisMayTake')}
-                                            </Text>
-                                            <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
-                                                {t('global:pleaseWaitEllipses')}
-                                            </Text>
-                                        </View>
-                                    }
-                                />
+                                <InfoBox>
+                                    <Text style={[styles.infoText, textColor]}>{t('attaching')}</Text>
+                                    <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
+                                        {t('loading:thisMayTake')}
+                                    </Text>
+                                    <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
+                                        {t('global:pleaseWaitEllipses')}
+                                    </Text>
+                                </InfoBox>
                                 <View
                                     style={{
                                         flex: 1,
@@ -349,6 +335,7 @@ class SnapshotTransition extends Component {
                                         {SnapshotTransition.renderProgressBarChildren(
                                             activeStepIndex,
                                             sizeOfActiveSteps,
+                                            t,
                                         )}
                                     </ProgressBar>
                                 </View>
@@ -384,12 +371,11 @@ const mapStateToProps = (state) => ({
     transitionAddresses: state.wallet.transitionAddresses,
     password: state.wallet.password,
     selectedAccountName: getSelectedAccountName(state),
-    selectedAccountType: getSelectedAccountType(state),
+    selectedAccountMeta: getSelectedAccountMeta(state),
     shouldPreventAction: shouldPreventAction(state),
     addresses: getAddressesForSelectedAccount(state),
     isAttachingToTangle: state.ui.isAttachingToTangle,
     isTransitioning: state.ui.isTransitioning,
-    isModalActive: state.ui.isModalActive,
     activeStepIndex: state.progress.activeStepIndex,
     activeSteps: state.progress.activeSteps,
 });

@@ -1,10 +1,13 @@
 import get from 'lodash/get';
+import noop from 'lodash/noop';
 import { Navigation } from 'react-native-navigation';
 import { withNamespaces } from 'react-i18next';
-import { Text, TextInput, NetInfo } from 'react-native';
+import { Text, TextInput, NetInfo, YellowBox } from 'react-native';
 import { Provider } from 'react-redux';
 import { changeIotaNode, SwitchingConfig } from 'shared-modules/libs/iota';
+import sharedStore from 'shared-modules/store';
 import iotaNativeBindings, { overrideAsyncTransactionObject } from 'shared-modules/libs/iota/nativeBindings';
+import { assignAccountIndexIfNecessary } from 'shared-modules/actions/accounts';
 import { fetchNodeList as fetchNodes } from 'shared-modules/actions/polling';
 import { setCompletedForcedPasswordUpdate } from 'shared-modules/actions/settings';
 import { ActionTypes } from 'shared-modules/actions/wallet';
@@ -13,6 +16,7 @@ import axios from 'axios';
 import { getLocaleFromLabel } from 'shared-modules/libs/i18n';
 import { clearKeychain } from 'libs/keychain';
 import { getDigestFn } from 'libs/nativeModules';
+import { persistStoreAsync, migrate, versionCheck, resetIfKeychainIsEmpty } from 'libs/store';
 import registerScreens from 'ui/routes/navigation';
 
 const launch = (store) => {
@@ -20,11 +24,12 @@ const launch = (store) => {
     SwitchingConfig.autoSwitch = false;
 
     // Disable accessibility fonts
+    Text.defaultProps = {};
     Text.defaultProps.allowFontScaling = false;
     TextInput.defaultProps.allowFontScaling = false;
 
-    // Ignore android warning against timers
-    console.ignoredYellowBox = ['Setting a timer']; // eslint-disable-line no-console
+    // Ignore specific warnings
+    YellowBox.ignoreWarnings(['Setting a timer', 'Breadcrumb', 'main queue setup', 'Share was not exported']);
 
     const state = store.getState();
 
@@ -33,6 +38,9 @@ const launch = (store) => {
         clearKeychain();
         store.dispatch(setCompletedForcedPasswordUpdate());
     }
+
+    // Assign accountIndex to every account in accountInfo if it is not assigned already
+    store.dispatch(assignAccountIndexIfNecessary(get(state, 'accounts.accountInfo')));
 
     // Set default language
     i18next.changeLanguage(getLocaleFromLabel(state.settings.language));
@@ -46,27 +54,48 @@ const launch = (store) => {
     const initialScreen = state.accounts.onboardingComplete
         ? navigateToForceChangePassword ? 'forceChangePassword' : 'login'
         : 'languageSetup';
-    renderInitialScreen(initialScreen);
+    renderInitialScreen(initialScreen, state, store);
 };
 
-const renderInitialScreen = (initialScreen) => {
-    Navigation.startSingleScreenApp({
-        screen: {
-            screen: initialScreen,
-            navigatorStyle: {
-                navBarHidden: true,
-                navBarTransparent: true,
-                topBarElevationShadowEnabled: false,
-                drawUnderStatusBar: true,
-                statusBarColor: '#181818',
-                screenBackgroundColor: '#181818',
+const onAppStart = () => {
+    registerScreens(sharedStore, Provider);
+    return new Promise((resolve) => Navigation.events().registerAppLaunchedListener(resolve));
+};
+
+const renderInitialScreen = (initialScreen, state, store) => {
+    Navigation.setDefaultOptions({
+        layout: {
+            backgroundColor: state.settings.theme.body.bg,
+            orientation: ['portrait'],
+        },
+        topBar: {
+            visible: false,
+            drawBehind: false,
+            elevation: 0,
+            background: {
+                color: 'black',
             },
         },
-        appStyle: {
-            orientation: 'portrait',
-            keepStyleAcrossPush: true,
+        statusBar: {
+            drawBehind: false,
+            backgroundColor: state.settings.theme.body.bg,
         },
     });
+    Navigation.setRoot({
+        root: {
+            stack: {
+                id: 'appStack',
+                children: [
+                    {
+                        component: {
+                            name: initialScreen,
+                        },
+                    },
+                ],
+            },
+        },
+    });
+    store.dispatch({ type: ActionTypes.RESET_ROUTE, payload: initialScreen });
 };
 
 /**
@@ -134,24 +163,29 @@ const hasConnection = (
     );
 };
 
-// Initialization function
-// Passed as a callback to persistStore to adjust the rendering time
-export default (store) => {
-    overrideAsyncTransactionObject(iotaNativeBindings, getDigestFn());
+onAppStart()
+    .then(() => persistStoreAsync())
+    .then(({ store, restoredState }) => migrate(store, restoredState))
+    .then((store) => resetIfKeychainIsEmpty(store))
+    .then((store) => versionCheck(store))
+    .then((store) => {
+        overrideAsyncTransactionObject(iotaNativeBindings, getDigestFn());
 
-    const initialize = (isConnected) => {
-        store.dispatch({
-            type: ActionTypes.CONNECTION_CHANGED,
-            payload: { isConnected },
-        });
-        fetchNodeList(store);
-        startListeningToConnectivityChanges(store);
+        const initialize = (isConnected) => {
+            store.dispatch({
+                type: ActionTypes.CONNECTION_CHANGED,
+                payload: { isConnected },
+            });
 
-        registerScreens(store, Provider);
-        withNamespaces.setI18n(i18next);
+            fetchNodeList(store);
+            startListeningToConnectivityChanges(store);
 
-        launch(store);
-    };
+            registerScreens(store, Provider);
+            withNamespaces.setI18n(i18next);
 
-    hasConnection('https://iota.org').then((isConnected) => initialize(isConnected));
-};
+            launch(store);
+        };
+
+        hasConnection('https://iota.org').then((isConnected) => initialize(isConnected));
+    })
+    .catch(noop);

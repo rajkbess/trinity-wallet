@@ -19,6 +19,7 @@
         "invalidResponse": "Node fout",
         "invalidResponseExplanation": "De node stuurde een fout terug. Probeer van node te veranderen.",
         "invalidResponseFetchingAccount": "De node stuurde een fout terug tijdens het opvragen van uw account informatie. Probeer van node te veranderen.",
+        "invalidResponseFetchingAccountDesktop": "The node returned an error while fetching your account information. If your problem persists, try changing node or disabling your system proxy in Trinity Settings.",
         "nodeOutOfSync": "Node gedesynchroniseerd",
         "nodeOutOfSyncExplanation": "Uw huidige node is gedesynchroniseerd. Verander uw node of probeer opnieuw.",
         "thisNodeOutOfSync": "De node is niet gesynchroniseerd. Verander uw node of probeer opnieuw.",
@@ -45,7 +46,7 @@
         "paperWallet": "Print uw seed uit",
         "addToPasswordManager": "Toevoegen aan wachtwoordmanager",
         "shareSeed": "Deel seed",
-        "share": "Share",
+        "share": "Delen",
         "proceed": "Doorgaan",
         "qr": "QR",
         "enterSeed": "Voer uw seed in.",
@@ -55,7 +56,9 @@
         "password": "Wachtwoord",
         "unrecognisedPassword": "Onjuist wachtwoord",
         "unrecognisedPasswordExplanation": "Het wachtwoord is onjuist. Probeer het opnieuw.",
-        "emptyPasswordExplanation": "You must enter a password. Please try again.",
+        "unrecognisedAccount": "Account niet herkend",
+        "unrecognisedAccountExplanation": "Account met de naam {{accountName}} niet herkend. Overweeg de wallet te resetten.",
+        "emptyPasswordExplanation": "U moet een wachtwoord invoeren. Probeer het opnieuw.",
         "capsLockIsOn": "Caps Lock staat aan",
         "syncInProgress": "Bezig met synchroniseren",
         "syncInProgressExplanation": "Wacht tot de synchronisatie is voltooid.",
@@ -71,6 +74,8 @@
         "wallet": "Portemonnee",
         "all": "Alle",
         "sent": "Verzonden",
+        "youReceived": "You received",
+        "youSent": "You sent",
         "received": "Ontvangen",
         "sending": "Uitgaand",
         "receiving": "Inkomend",
@@ -106,7 +111,6 @@
         "snapshotTransitionInProgressExplanation": "Wacht tot de transitie is voltooid.",
         "checkForUpdates": "Controleren op Updates",
         "account": "Account",
-        "enterYourPassword": "Voer uw wachtwoord in",
         "changeNode": "Verander Node",
         "addCustomNode": "Aangepaste Node Toevoegen",
         "nodeMustUseHTTPS": "Ongeldige node (niet HTTPS)",
@@ -126,7 +130,7 @@
         "spentAddressExplanation": "WAARSCHUWING: Saldo op verbruikte adressen",
         "discordInformation": "Vaker dan een keer sturen vanaf hetzelfde adres is gevaarlijk. Ga naar het #help kanaal in Discord om uit te vinden wat u kunt doen.",
         "androidInsecureClipboardWarning": "Android heeft geen veilig kladblok.",
-        "androidCopyPasteWarning": "Kopieer/plak nooit uw seed op een Android apparaat.",
+        "androidCopyPasteWarning": "Never copy/paste a seed on an Android device.",
         "willNotCopyPasteSeed": "Ik zal mijn seed niet kopiëren/plakken",
         "mustBeStoredAppropriately": "Het moet adequaat worden opgeslagen.",
         "deviceMayBecomeUnresponsive": "Uw apparaat kan wellicht even niet reageren.",
@@ -142,8 +146,18 @@
         "tryingAgainWithLocalPoW": "Probeer het nogmaals met lokale proof of work.",
         "tryingAgainWithDifferentNode": "Probeer het nogmaals met een andere node.",
         "errorFetchingAccountInformation": "Fout tijdens het ophalen van accountinformatie.",
-        "errorAccessingKeychain": "Keychain error",
-        "errorAccessingKeychainExplanation": "Cannot access keychain required for secure storage."
+        "errorSyncingAddresses": "Error syncing address information. Trying again with a different node.",
+        "errorAccessingKeychain": "Fout met keychain",
+        "errorAccessingKeychainExplanation": "Kan keychain nodig voor veilige opslag niet bereiken.",
+        "mainWallet": "HOOFDACCOUNT",
+        "confirm": "Confirm",
+        "delete": "Delete",
+        "shouldUpdate": "A new update is available",
+        "shouldUpdateExplanation": "A new update has been released. It is recommended that you update to the latest version.",
+        "forceUpdate": "Update the app to continue",
+        "forceUpdateExplanation": "A critical update has been released. Please update the app now.",
+        "missingPermission": "File system permission required",
+        "missingPermissionExplanation": "Access to the file system is required in order to perform this function."
     },
     "addAdditionalSeed": {
         "seedInvalidChars": "De seed bevat ongeldige tekens",
@@ -197,24 +211,12 @@
         "passwordTooShortExplanation": "Uw wachtwoord moet minstens {{minLength}} tekens lang zijn. Het is momenteel {{currentLength}} tekens lang. Probeer het opnieuw.",
         "passwordMismatch": "Wachtwoorden komen niet overeen",
         "passwordMismatchExplanation": "Het ingevoerde wachtwoord is onjuist. Probeer het nogmaals.",
-        "anEncryptedCopy": "Een gecodeerde kopie van uw seed wordt opgeslagen op uw apparaat. U gebruikt dit wachtwoord voor toegang tot uw portemonnee in de toekomst.",
+        "anEncryptedCopy": "This is your main wallet password. You will use it to log in.",
         "retypePassword": "Herhaal wachtwoord"
     },
     "copyToClipboard": {
         "seedCleared": "Klembord gewist",
-        "seedClearedExplanation": "De seed is van het klembord gewist voor uw veiligheid.",
-        "seedCopied": "Seed gekopieerd naar klembord",
-        "seedCopiedExplanation": "De seed zal worden gewist zodra u op \"GEREED\" drukt of 60 seconden wacht.",
-        "copyToClipboard": "Kopieer Seed",
-        "shareSeed": "Stuur uw seed naar een veilige wachtwoordmanager",
-        "storeEncrypted": "Bewaar uw seed versleuteld in een wachtwoord manager.",
-        "doNotOpen": "Open geen andere apps tijdens dit proces.",
-        "tapConfirm": "Tik op het selectievakje om te bevestigen.",
-        "passwordManagerCheckbox": "Ik zal mijn seed opslaan in een wachtwoordmanager",
-        "copy": "KOPIEER",
-        "noPasswordManagers": "Geen ondersteunde wachtwoord managers geïnstalleerd",
-        "noPasswordManagersExplanation": "Er zijn geen ondersteunde wachtwoordmanagers gevonden op uw apparaat. Installeer alstublieft Keepass2Android.",
-        "followTutorialToSecurelyShareSeed": "Als u uw seed wil opslaan in een wachtwoordmanager, moet u een tutorial volgen via de volgende link"
+        "seedClearedExplanation": "De seed is van het klembord gewist voor uw veiligheid."
     },
     "enterSeed": {
         "invalidCharacters": "Seed bevat ongeldige tekens",
@@ -243,7 +245,8 @@
         "login": "Log In",
         "setNode": "Kies Node",
         "whyBiometricDisabled": "Waarom is biometrische autenticatie uitgeschakeld?",
-        "whyBiometricDisabledExplanation": "Biometrisch inloggen is uitgeschakeld tijdens de eerste inlog voor jouw veiligheid. Bij het gebruik van Trinity wordt u uitgelogd bij inactiviteit. Daarna kunt u opnieuw inloggen met biometrische autenticatie."
+        "whyBiometricDisabledExplanationPart1": "Biometric authentication is disabled on first app load for your security.",
+        "whyBiometricDisabledExplanationPart2": "When using Trinity you will be logged out for inactivity. You can then log back in with biometric authentication."
     },
     "loading": {
         "loadingFirstTime": "Seed voor de eerste keer laden.",
@@ -258,10 +261,10 @@
         "pressForNewSeed": "Klik voor Nieuwe Seed",
         "generateSuccess": "Seed succesvol gegenereerd",
         "individualLetters": "Druk op de letters om deze te veranderen in een willekeurige letter.",
-        "individualLetterCount": "Press <1><0>{{count}}</0></1> more letter to randomise it.",
-        "individualLetterCount_plural": "Press <1><0>{{count}}</0></1> more letters to randomise them.",
-        "randomiseCharsToContinue": "Randomise <1>{{count}}</1> character to continue.",
-        "randomiseCharsToContinue_plural": "Randomise <1>{{count}}</1> characters to continue.",
+        "individualLetterCount": "Druk nog op <1><0>{{count}}</0></1> letter om willekeurig te maken.",
+        "individualLetterCount_plural": "Druk nog op <1><0>{{count}}</0></1> letters om ze willekeurig te maken.",
+        "randomiseCharsToContinue": "Maak <1>{{count}}</1> teken willekeurig om verder te gaan.",
+        "randomiseCharsToContinue_plural": "Maak <1>{{count}}</1> tekens willekeurig om verder te gaan.",
         "whatIsASeed": "Wat is een seed?"
     },
     "onboardingComplete": {
@@ -272,12 +275,12 @@
     "paperWallet": {
         "neverShare": "Deel uw seed met niemand.",
         "iotaLogo": "IOTA logo",
-        "print": "PRINT",
+        "print": "Print",
         "paperConvenience": "Een papieren kopie van uw seed printen is een handige manier om het op te slaan.",
         "publicInsecure": "Maar printen op publieke wifi of een publieke printer is onveilig.",
-        "tapCheckboxes": "Tik op de selectievakjes om te bevestigen.",
-        "wifiCheckbox": "Ik zal niet printen op publieke wifi",
-        "printerCheckbox": "Ik zal niet printen op een publieke printer"
+        "pleaseCheck": "Please check and confirm before you print",
+        "wifiConfirmation": "I am not on on public wifi",
+        "printerConfirmation": "I am not printing on a public printer"
     },
     "receive": {
         "yourAddress": "Jouw adres",
@@ -286,12 +289,13 @@
         "copyAddress": "Kopieer adres",
         "addressCopied": "Adres gekopieerd",
         "addressCopiedExplanation": "Uw adres is naar het klembord gekopieerd.",
-        "generateNewAddress": "Nieuw Adres",
+        "generateNewAddress": "Generate address",
         "noAddresses": "GEEN ADRESSEN",
         "spent": "Uitgegeven",
-        "missingPermission": "Toegang tot bestandsysteem vereist",
-        "missingPermissionExplanation": "Toegang tot het bestandsysteem is nodig om QR codes te delen.",
-        "tag": "Label"
+        "tag": "Label",
+        "generateAnAddress": "Generate address",
+        "generateAnAddressTitle": "Generate an address",
+        "generateAnAddressExplanation": "Please generate an address before using this function."
     },
     "saveYourSeed": {
         "saveYourSeed": "Back uw seed up",
@@ -305,7 +309,8 @@
         "letsWriteDownYourSeed": "Laten we uw seed opschrijven",
         "youCanHighlightCharacters": "U kan 9 karakters tegelijk markeren",
         "printBlankWallet": "Print een lege portemonnee",
-        "whatIsChecksum": "Iedereen seed heeft een overeenkomende 3-karakter controlesleutel",
+        "whatIsAChecksum": "What is a checksum?",
+        "everySeedHasAChecksum": "Every seed has a corresponding 3-character checksum.",
         "iHavesavedMySeed": "Ik heb mijn seed opgeslagen",
         "checksumExplanation": "Wanneer u uw seed toevoegt aan uw portemonnee, moet u er zeker van zijn dat de gegenereerde controlesom hetzelfde is als degene die u heeft opgeschreven.",
         "mustSaveYourSeed": "<0><0>U moet uw seed opslaan met </0><1>tenminste één</1><2> van de onderstaande opties.</2></0>"
@@ -346,7 +351,8 @@
         "totalTime": "Totale tijd",
         "addressPasteDetected": "Adres plakken gedetecteerd",
         "addressPasteExplanation": "Het lijkt erop dat u een adres wil plakken. Zorg ervoor dat dit adres overeenkomt met het adres waarnaar u wilt zenden.",
-        "invalid": "ONGELDIG"
+        "invalid": "ONGELDIG",
+        "swipeToSend": "Swipe to send"
     },
     "setSeedName": {
         "letsAddName": "Laten we een naam toevoegen",
@@ -357,7 +363,9 @@
         "advanced": "Geavanceerd",
         "standard": "Standaard",
         "advancedModeExplanation": "Geavanceerde modus toont meer gedetailleerde technische informatie.",
-        "modesExplanation": "Schakel geavanceerde modus alleen in als u bekend bent met IOTA. Het kan anders verwarrend zijn."
+        "modesExplanation": "Schakel geavanceerde modus alleen in als u bekend bent met IOTA. Het kan anders verwarrend zijn.",
+        "modeUpdated": "Mode updated",
+        "modeUpdatedExplanation": "You have changed to {{mode}} mode"
     },
     "settings": {
         "transferSending": "Transactie in behandeling",
@@ -415,7 +423,6 @@
         "reset": "Herstel"
     },
     "walletSetup": {
-        "creatingSeed": "Seed aan het maken",
         "okay": "Oke. Laten we uw portemonnee instellen!",
         "doYouNeedASeed": "Wilt u een nieuwe seed maken?",
         "seedExplanation": "Uw IOTA seed is de hoofdsleutel tot uw munten. Het is 81 karakters lang, en gebruikt alleen de letters A-Z of het nummer 9.",
@@ -445,7 +452,9 @@
         "receive": "Ontvang",
         "empty": "Leeg",
         "retrying": "Opnieuw proberen...",
-        "yesterday": "Gisteren"
+        "yesterday": "Gisteren",
+        "promotingAnotherBundle": "Andere bundel aan het promoten",
+        "pleaseWait": "Please wait, Trinity is promoting another bundle."
     },
     "accountManagement": {
         "viewSeed": "Seed bekijken",
@@ -488,33 +497,36 @@
         "mockup": "Mockup"
     },
     "themes": {
-        "classic": "Classic",
-        "contemporary": "Contemporary",
-        "dark": "Dark",
-        "default": "Default",
-        "electric": "Electric",
-        "ionic": "Ionic",
-        "light": "Light",
-        "lucky": "Lucky",
-        "mint": "Mint",
-        "steelblue": "Steel Blue"
+        "classic": "Klassiek",
+        "contemporary": "Modern",
+        "dark": "Donker",
+        "default": "Standaard",
+        "electric": "Elektrisch",
+        "ionic": "Ionisch",
+        "light": "Licht",
+        "lucky": "Geluk",
+        "mint": "Munt",
+        "steelblue": "Staalblauw"
     },
     "currencySelection": {
         "currency": "Valuta"
     },
     "logoutConfirmationModal": {
-        "logoutConfirmation": "Weet u zeker dat u wilt uitloggen?"
+        "logoutConfirmation": "Weet u zeker dat u wilt uitloggen?",
+        "aboutToLogOut": "You are about to log out",
+        "areYouSure": "Are you sure?"
     },
     "qrScanner": {
         "scan": "QR-code scannen"
     },
     "unitInfoModal": {
-        "unitSystem": "Eenhedenstelsel",
+        "unitSystem": "Unit System",
         "trillion": "Biljoen",
         "billion": "Miljard",
         "million": "Miljoen",
         "thousand": "Duizend",
-        "one": "Één"
+        "one": "Één",
+        "unitInfoExplanation": "IOTAs are typically acquired in multiples of one million, but can be transferred as a single IOTA."
     },
     "usedAddressModal": {
         "cantSpendFullBalanceQuestion": "Waarom kan ik mijn volledige saldo niet uitgeven?",
@@ -522,9 +534,9 @@
         "discordInformation": "Indien u hulp nodig heeft verzoeken wij u naar het #help kanaal te gaan op Discord."
     },
     "deleteAccount": {
-        "areYouSure": "<0></0><1>Weet u zeker dat u</1><2>{{accountName}}?</2><3>wilt verwijderen?</3>",
+        "areYouSure": "Weet u zeker dat u uw account wilt verwijderen?",
         "yourSeedWillBeRemoved": "Uw seed en transactiegeschiedenis zullen worden verwijderd.",
-        "thisAction": "Deze actie kan niet ongedaan worden gemaakt.",
+        "thisAction": "Deze actie kan niet worden teruggedraaid",
         "enterPassword": "Typ uw wachtwoord als u deze account wilt verwijderen."
     },
     "manualSync": {
@@ -536,19 +548,22 @@
         "syncingYourAccount": "Account wordt gesynchroniseerd."
     },
     "useExistingSeed": {
-        "title": "Voer een seed en accountnaam in.",
+        "title": "Enter an account name and seed",
         "incorrectFormat": "Incorrecte seed opmaak",
         "validSeedExplanation": "Geldige seeds bestaan uit 81 karakters en bevatten alleen A-Z of 9."
     },
     "viewSeed": {
         "enterPassword": "Voer uw wachtwoord in om uw seed te bekijken.",
         "viewSeed": "Bekijk Seed",
-        "hideSeed": "Verberg Seed"
+        "hideSeed": "Verberg Seed",
+        "notAvailable": "Seed export is not available for {{accountType}} account type",
+        "accountIndex": "Your Ledger account index",
+        "accountPage": "Your Ledger account page"
     },
     "saveSeedConfirmation": {
         "didSaveSeed": "Heeft u uw seed opgeslagen?",
-        "alreadyHave": "Ik heb mijn seed opgeslagen",
-        "reenterSeed": "Bij de volgende stap wordt u gevraagd om uw seed opnieuw in te voeren.",
+        "iHaveBackedUp": "I have safely backed up my seed",
+        "reenterSeed": "At the next step you need to re-enter your seed.",
         "reenterSeedWarning": "Als u geen back-up heeft van uw seed en uw apparaat werkt niet meer, bent u al uw IOTA kwijt.",
         "pleaseConfirm": "Bevestig dat u uw seed veilig hebt opgeslagen."
     },
@@ -568,15 +583,19 @@
         "status": "Status",
         "fingerprintUnavailable": "Biometrische authenticatie onbeschikbaar",
         "fingerprintUnavailableExplanation": "Uw apparaat ondersteunt geen biometrische authenticatie of het is niet ingesteld in de apparaatinstellingen.",
-        "buttonInstructionsDisable": "Druk op de knop hieronder om vingerafdruk-verificatie uit te schakelen.",
+        "buttonInstructionsDisable": "Press the button below to disable fingerprint authentication",
         "buttonInstructionsEnable": "Druk op de knop hieronder om vingerafdruk-verificatie uit te schakelen.",
-        "buttonInstructionsDisableIPhoneX": "Druk op de knop hieronder om Face ID uit te schakelen.",
-        "buttonInstructionsEnableIPhoneX": "Druk op de knop hieronder om Face ID in te schakelen.",
+        "buttonInstructionsDisableIPhoneX": "Press the button below to disable Face ID",
+        "buttonInstructionsEnableIPhoneX": "Press the button below to enable Face ID",
         "instructionsLogin": "Raak vingerafdruklezer aan om in te loggen"
     },
     "transferConfirmation": {
         "youAreAbout": "U staat op het punt om {{contents}} te versturen naar het adres",
-        "aMessage": "een bericht"
+        "aMessage": "een bericht",
+        "fromAccount": "From {{selectedAccountName}}",
+        "toAddress": "To address",
+        "sendingAMessage": "Sending a message",
+        "sendingAnEmptyMessage": "Sending an empty message"
     },
     "twoFA": {
         "wrongCode": "Verkeerde code",
@@ -597,23 +616,29 @@
     },
     "seedVault": {
         "exportSeedVault": "Seedkluis exporteren",
-        "seedVaultExplanation": "Een Seedkluis is een versleuteld bestand om uw seed veilig op te slaan. De seed is versleuteld met een wachtwoord en kan niet gebruikt worden zonder dat wachtwoord.",
+        "seedVaultExplanation": "A SeedVault is an encrypted file for backing up your seed. The seed is encrypted with a SeedVault Key and cannot be accessed without that key.",
         "seedVaultWarning": "Zorg ervoor dat u het bestand op meerdere locaties backupt (bijvoorbeeld: harde schijf, cloud, USB). Raakt u dit bestand kwijt en heeft u uw seed niet ergens opgeslagen, bent u uw IOTA kwijt.",
         "exportFail": "Exporteren van Seedkluis mislukt",
         "exportFailExplanation": "Er was een probleem met het exporteren van de Seedkluis. Zorg ervoor dat u de juiste bevoegdheden en genoeg vrije ruimte hebt.",
         "exportSuccess": "Seedkluis geëxporteerd",
         "exportSuccessExplanation": "Uw versleutelde seedbestand is met succes geëxporteerd.",
-        "importSuccess": "Seed imported",
-        "importSuccessExplanation": "Your seed was imported successfully.",
-        "saveToDownloadFolder": "Save to Download Folder",
+        "unrecognisedKey": "SeedVault Key niet herkend",
+        "unrecognisedKeyExplanation": "De Key kon niet worden herkend. Probeer het opnieuw.",
+        "emptyKey": "Geen SeedVault Key ingevoerd",
+        "emptyKeyExplanation": "U moet een Key invullen. Probeer het opnieuw.",
+        "importSuccess": "Seed geïmporteerd",
+        "importSuccessExplanation": "Uw seed is succesvol geïmporteerd.",
+        "saveToDownloadFolder": "Opslaan in Download map",
         "importSeedVault": "Seedkluis importeren",
-        "dropSeedVaultHere": "Drop SeedVault here <1></1> or click to browse",
-        "enterPasswordExplanation": "Voer uw wachtwoord in om de Seedkluis te openen",
+        "dropInstructions": "Drop SeedVault or text here <1></1> or click to browse",
+        "dropActive": "Drop SeedVault or text here",
+        "enterKeyExplanation": "Voer uw Key in om de SeedVault te openen",
         "noSeedFound": "Seedkluis bevat geen geldige seed",
         "noSeedFoundExplanation": "De Seedkluis is leeg, of heeft een seed in een ongeldig formaat.",
         "seedFileError": "Kan Seedkluis niet openen",
         "seedFileErrorExplanation": "Er was een probleem tijdens het openen van de Seedkluis. Als u het juiste bestand hebt gekozen, kan het zijn dat dit corrupt is.",
-        "seedVaultPasswordExplanation": "First we need to secure your SeedVault. Please choose a password to encrypt the file. You will need this password to restore your seed from the SeedVault back up. Feel free to use the same password you use for Trinity."
+        "seedVaultKeyExplanation": "First we need to secure your SeedVault. Please choose a key to encrypt the file. You will need this key to restore your seed from the SeedVault back up.",
+        "retypeKey": "Retype key"
     },
     "chart": {
         "mcap": "MCAP",
@@ -647,7 +672,8 @@
         "preparingTransfers": "Voorbereiding van transacties",
         "gettingTransactionsToApprove": "Bezig met transacties akkoorderen",
         "proofOfWork": "Bewijs van inspanning voltooien",
-        "broadcasting": "Uitzenden"
+        "broadcasting": "Uitzenden",
+        "transferComplete": "Transfer complete"
     },
     "snapshotTransition": {
         "cannotCompleteTransition": "Snapshot transitie kan niet worden voltooid",
@@ -661,7 +687,8 @@
         "transition": "Transitie",
         "transitioning": "Aan het overgaan voor de snapshot.",
         "generatingAndDetecting": "Adressen aan het genereren en saldo aan het detecteren.",
-        "attaching": "Adressen aan het koppelen aan de Tangle."
+        "attaching": "Adressen aan het koppelen aan de Tangle.",
+        "attachProgress": "Attaching address {{currentAddress}} of {{totalAddresses}}"
     },
     "deepLink": {
         "autofill": "Automatisch vullen succesvol",
@@ -674,7 +701,9 @@
         "newVersionAvailable": "Nieuwe versie beschikbaar",
         "newVersionAvailableExplanation": "A new <strong>Trinity</strong> <strong>{{version}}</strong> version is available. Carefully read the release notes and verify the download source before updating:",
         "installUpdate": "Update installeren en opnieuw starten",
-        "installUpdateExplanation": "Download compleet. Trinity zal nu herstarten om de update te installeren."
+        "installUpdateExplanation": "Download compleet. Trinity zal nu herstarten om de update te installeren.",
+        "downloadingUpdate": "Downloading update",
+        "downloadProgress": "{{transferred}} of {{total}} downloaded"
     },
     "notificationLog": {
         "errorLog": "Foutlog"
@@ -695,6 +724,10 @@
         "setupIncomplete": "Portomonnee setup onvolledig",
         "completeSetup": "Voltooi setup"
     },
+    "proxy": {
+        "proxy": "Use system proxy",
+        "proxyExplanation": "Detect and use system wide network proxy settings. Close and reopen the wallet after changing this setting."
+    },
     "notifications": {
         "notifications": "Notificaties",
         "notificationExplanation": "Ontvang systeem notificaties over nieuwe transacties.",
@@ -707,15 +740,47 @@
         "confirmedOut": "Uitgaande {{value}} van {{account}} is bevestigd"
     },
     "bytetrit": {
-        "sweepSucceeded": "Funds successfully unlocked",
-        "sweepSucceededExplanation": "Your funds have been successfully unlocked and moved to a new address. Promote the transactions to help them confirm.",
-        "sweepError": "Error unlocking funds",
-        "sweepErrorExplanation": "Something went wrong while unlocking your funds. Trying again.",
-        "warningTitle": "Warning: Locked funds detected",
-        "explanation": "Trinity Desktop version 0.3.4 contained a bug that can temporarily lock funds. This affects a small number of users that performed transactions with 0.3.4.",
-        "explanationAccounts": "Locked funds have been detected on your accounts: {{accounts}}. Trinity will now automatically recover your funds, by moving them to a new address.",
-        "proceed": "Proceed to Recovery",
-        "sweepConfirmation": "You are about to sweep {{amount}} to the address {{address}}. Account: {{accountName}}, address index: {{index}}",
-        "sweepConfirmationTitle": "Sweep confirmation"
+        "sweepSucceeded": "Saldo succesvol ontgrendeld",
+        "sweepSucceededExplanation": "Uw saldo is succesvol ontgrendeld en naar een ander adres verplaatst. Promote de transacties om ze te helpen bevestigd te worden.",
+        "sweepError": "Probleem met saldo ontgrendelen",
+        "sweepErrorExplanation": "Er ging iets mis bij het ontgrendelen van uw saldo. Opnieuw proberen...",
+        "warningTitle": "Waarschuwing: Vergrendeld saldo gedetecteerd",
+        "explanation": "Trinity Desktop versie 0.3.4 bevatte een bug die tijdelijk saldo's kon vergrendelen. Dit geldt voor een klein aantal gebruikers die transacties met 0.3.4 uitgevoerd hebben.",
+        "explanationAccounts": "Vergrendeld saldo gedetecteerd op accounts: {{accounts}}. Trinity zal nu automatisch uw saldo herstellen, door het naar een nieuw adres te verplaatsen.",
+        "proceed": "Verder gaan met herstel",
+        "sweepConfirmation": "U staat op het punt {{amount}} naar adres {{address}} te verplaatsen. Account: {{accountName}}, adres index {{index}}",
+        "sweepConfirmationTitle": "Verplaatsing bevestigen"
+    },
+    "ledger": {
+        "ready": "Ledger device connected and ready",
+        "notReady": "If you wish to use a Ledger device, connect and unlock it now",
+        "indexInUse": "Index already in use for account {{account}}",
+        "indexInUseExplanation": "Your chosen index is already in use on one of your accounts. Please choose another index number.",
+        "proceedWithLedger": "Proceed with Ledger setup",
+        "accountIndex": "Account index",
+        "accountPage": "Account page",
+        "chooseAccountIndex": "Choose your Ledger account index",
+        "accountIndexExplanation": "Your Ledger can store multiple seeds. Each seed is identified by a unique index number. An unused index has been pre-selected, but feel free to choose your own. Make sure you note down your chosen index number.",
+        "accountPageExplanation": "Some third party wallets require pages.",
+        "connectionError": "Cannot connect to Ledger",
+        "connectionErrorExplanation": "Check that your Ledger is connected and unlocked.",
+        "connectionTitle": "Connect your Ledger",
+        "connectionExplanation": "A Ledger device must be connected to perform this function.",
+        "transactionTitle": "Scroll through and approve the transaction on your Ledger",
+        "transactionExplanation": "Use your Ledger device to approve the outgoing transaction.",
+        "applicationTitle": "Open Ledger IOTA app",
+        "applicationExplanation": "Go to your Ledger and open the IOTA app to continue using Trinity.",
+        "cannotSendZeroValueTitle": "Cannot send zero value transfer",
+        "cannotSendZeroValueExplanation": "Cannot send zero value transfers with a Ledger device.",
+        "ledgerDisconnectedTitle": "Ledger device disconnected",
+        "ledgerDisconnectedExplanation": "The Ledger device was disconnected. Please reconnect and try again.",
+        "ledgerDeniedTitle": "Transaction denied",
+        "ledgerDeniedExplanation": "The transaction was denied on the Ledger device.",
+        "ledgerIncorrectIndex": "Ledger device mismatch",
+        "ledgerIncorrectIndexExplanation": "The connected Ledger device does not match the one linked to this account, or the recovery phrase has been changed.",
+        "checkAddress": "Check the receive address",
+        "checkAddressExplanation": "Check that the address matches the one displayed on your Ledger device.",
+        "applicationNotInitialised": "Warning unconfirmed",
+        "applicationNotInitialisedExplanation": "Reopen the IOTA app on your Ledger device, accept the informational warning and try again."
     }
 }

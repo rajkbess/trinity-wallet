@@ -1,23 +1,24 @@
 import React, { Component } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
-import { VALID_SEED_REGEX, getChecksum } from 'shared-modules/libs/iota/utils';
+import { MAX_SEED_LENGTH, VALID_SEED_REGEX, getChecksum } from 'shared-modules/libs/iota/utils';
 import PropTypes from 'prop-types';
 import { width, height } from 'libs/dimensions';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import { Icon } from 'ui/theme/icons';
+import { isAndroid } from 'libs/device';
 
 const styles = StyleSheet.create({
     fieldContainer: {
         justifyContent: 'center',
     },
     fieldLabel: {
-        fontSize: GENERAL.fontSize2,
+        fontSize: Styling.fontSize2,
         marginBottom: height / 100,
         marginLeft: 1,
         backgroundColor: 'transparent',
     },
     textInput: {
-        fontSize: GENERAL.fontSize4,
+        fontSize: Styling.fontSize4,
         fontFamily: 'SourceSansPro-Light',
         flex: 6,
         marginHorizontal: width / 28,
@@ -28,7 +29,7 @@ const styles = StyleSheet.create({
     innerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderRadius: GENERAL.borderRadiusSmall,
+        borderRadius: Styling.borderRadius,
         height: height / 14,
         borderWidth: 1,
     },
@@ -39,13 +40,13 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     conversionTextContainer: {
-        right: width / 7.5,
+        right: width / 6.5,
         position: 'absolute',
         justifyContent: 'center',
         alignItems: 'flex-start',
     },
     conversionText: {
-        fontSize: GENERAL.fontSize4,
+        fontSize: Styling.fontSize4,
         fontFamily: 'SourceSansPro-Light',
         backgroundColor: 'transparent',
     },
@@ -56,7 +57,7 @@ const styles = StyleSheet.create({
     },
     denominationText: {
         fontFamily: 'SourceSansPro-Bold',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
     },
     passwordStrengthIndicatorContainer: {
@@ -67,7 +68,7 @@ const styles = StyleSheet.create({
     },
     passwordStrengthIndicator: {
         width: width / 15,
-        height: height / 120,
+        height: height / 160,
         marginLeft: width / 150,
     },
     labelContainer: {
@@ -83,15 +84,19 @@ const styles = StyleSheet.create({
         borderRightWidth: 1,
         borderLeftWidth: 1,
         borderBottomWidth: 1,
-        borderBottomLeftRadius: GENERAL.borderRadius,
-        borderBottomRightRadius: GENERAL.borderRadius,
+        borderBottomLeftRadius: width / 60,
+        borderBottomRightRadius: width / 60,
         position: 'absolute',
         right: width / 100,
-        bottom: -width / 19,
+        bottom: isAndroid ? -width / 19 : -width / 20,
     },
     checksumText: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontsize1,
+        fontSize: Styling.fontsize1,
+    },
+    seedInput: {
+        height: height / 7.4,
+        justifyContent: 'flex-start',
     },
 });
 
@@ -142,13 +147,15 @@ class CustomTextInput extends Component {
         passwordStrength: PropTypes.number,
         /** Entered seed */
         seed: PropTypes.string,
+        /** Determines whether text input is for seeds */
+        isSeedInput: PropTypes.bool,
     };
 
     static defaultProps = {
         onFocus: () => {},
         onBlur: () => {},
         onFingerprintPress: () => {},
-        containerStyle: {},
+        containerStyle: { width: Styling.contentWidth },
         widget: 'empty',
         onDenominationPress: () => {},
         onQRPress: () => {},
@@ -209,8 +216,10 @@ class CustomTextInput extends Component {
 
         if (seed.length !== 0 && !seed.match(VALID_SEED_REGEX)) {
             checksumValue = '!';
-        } else if (seed.length !== 0 && seed.length < 81) {
+        } else if (seed.length !== 0 && seed.length < MAX_SEED_LENGTH) {
             checksumValue = '< 81';
+        } else if (seed.length > MAX_SEED_LENGTH) {
+            checksumValue = '> 81';
         } else if (seed.length === 81 && seed.match(VALID_SEED_REGEX)) {
             checksumValue = getChecksum(seed);
         }
@@ -333,12 +342,13 @@ class CustomTextInput extends Component {
             isPasswordValid,
             passwordStrength,
             seed,
+            isSeedInput,
             ...restProps
         } = this.props;
         const { isFocused } = this.state;
 
         return (
-            <View style={[styles.fieldContainer, containerStyle]}>
+            <View style={[styles.fieldContainer, containerStyle, isSeedInput && styles.seedInput]}>
                 {label && (
                     <View style={styles.labelContainer}>
                         <Text style={[styles.fieldLabel, this.getLabelStyle()]}>{label.toUpperCase()}</Text>
@@ -404,7 +414,7 @@ class CustomTextInput extends Component {
                         onFocus={() => this.onFocus()}
                         onBlur={() => this.onBlur()}
                         onChangeText={onChangeText}
-                        selectionColor={theme.primary.color}
+                        selectionColor={theme.input.alt}
                         underlineColorAndroid="transparent"
                     />
                     {(widget === 'qr' && this.renderQR({ borderLeftColor: theme.input.alt })) ||

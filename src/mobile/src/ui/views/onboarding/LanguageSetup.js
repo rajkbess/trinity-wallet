@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { StyleSheet, View, TouchableWithoutFeedback, Image } from 'react-native';
 import PropTypes from 'prop-types';
 import { withNamespaces } from 'react-i18next';
+import { navigator } from 'libs/navigation';
 import SplashScreen from 'react-native-splash-screen';
 import { getDeviceLocale } from 'react-native-device-info';
 import { I18N_LOCALE_LABELS, getLabelFromLocale, getLocaleFromLabel, detectLocale } from 'shared-modules/libs/i18n';
@@ -10,13 +11,12 @@ import helloBackImagePath from 'shared-modules/images/hello-back.png';
 import { connect } from 'react-redux';
 import { setSetting } from 'shared-modules/actions/wallet';
 import i18next from 'shared-modules/libs/i18next';
-import WithBackPressCloseApp from 'ui/components/BackPressCloseApp';
+import AnimatedComponent from 'ui/components/AnimatedComponent';
 import { width, height } from 'libs/dimensions';
 import { isAndroid } from 'libs/device';
 import DropdownComponent from 'ui/components/Dropdown';
-import Button from 'ui/components/Button';
+import SingleFooterButton from 'ui/components/SingleFooterButton';
 import { Icon } from 'ui/theme/icons';
-import DynamicStatusBar from 'ui/components/DynamicStatusBar';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
 const styles = StyleSheet.create({
@@ -42,7 +42,6 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     helloBackground: {
-        position: 'absolute',
         width,
         height: width / 0.95,
     },
@@ -55,8 +54,6 @@ class LanguageSetup extends Component {
     static propTypes = {
         /** @ignore */
         t: PropTypes.func.isRequired,
-        /** Navigation object */
-        navigator: PropTypes.object.isRequired,
         /** @ignore */
         theme: PropTypes.object.isRequired,
         /** @ignore */
@@ -67,6 +64,8 @@ class LanguageSetup extends Component {
         acceptedPrivacy: PropTypes.bool.isRequired,
         /** @ignore */
         acceptedTerms: PropTypes.bool.isRequired,
+        /** @ignore */
+        forceUpdate: PropTypes.bool.isRequired,
     };
 
     componentWillMount() {
@@ -81,18 +80,25 @@ class LanguageSetup extends Component {
     }
 
     onNextPress() {
-        const { theme: { body, bar }, acceptedTerms, acceptedPrivacy } = this.props;
-        this.props.navigator.push({
-            screen: this.getNextRoute(),
-            navigatorStyle: {
-                navBarHidden: true,
-                navBarTransparent: true,
-                topBarElevationShadowEnabled: false,
-                screenBackgroundColor: body.bg,
-                drawUnderStatusBar: true,
-                statusBarColor: !acceptedTerms || !acceptedPrivacy ? bar.bg : body.bg,
+        const { theme: { body, bar }, acceptedTerms, acceptedPrivacy, forceUpdate } = this.props;
+        if (forceUpdate) {
+            return;
+        }
+        navigator.push(this.getNextRoute(), {
+            animations: {
+                push: {
+                    enable: false,
+                },
+                pop: {
+                    enable: false,
+                },
             },
-            animated: false,
+            layout: {
+                backgroundColor: body.bg,
+            },
+            statusBar: {
+                backgroundColor: !acceptedTerms || !acceptedPrivacy ? bar.bg : body.bg,
+            },
         });
     }
 
@@ -117,7 +123,7 @@ class LanguageSetup extends Component {
     }
 
     render() {
-        const { t, theme: { body, primary } } = this.props;
+        const { t, theme: { body } } = this.props;
 
         return (
             <TouchableWithoutFeedback
@@ -130,35 +136,54 @@ class LanguageSetup extends Component {
             >
                 <View style={{ flex: 1, backgroundColor: body.bg }}>
                     <View style={styles.container}>
-                        <Image style={styles.helloBackground} source={helloBackImagePath} />
-                        <DynamicStatusBar backgroundColor={body.bg} />
+                        <AnimatedComponent
+                            animationInType={['fadeIn']}
+                            animationOutType={['fadeOut']}
+                            delay={0}
+                            style={[styles.helloBackground, { position: 'absolute' }]}
+                        >
+                            <Image style={styles.helloBackground} source={helloBackImagePath} />
+                        </AnimatedComponent>
                         <View style={styles.topContainer}>
-                            <Icon name="iota" size={width / 8} color={body.color} />
+                            <AnimatedComponent
+                                animationInType={['fadeIn']}
+                                animationOutType={['fadeOut', 'slideOutLeft']}
+                                delay={200}
+                            >
+                                <Icon name="iota" size={width / 8} color={body.color} />
+                            </AnimatedComponent>
                         </View>
                         <View style={styles.midContainer}>
-                            <View style={{ flex: 0.5 }} />
-                            <DropdownComponent
-                                onRef={(c) => {
-                                    this.dropdown = c;
-                                }}
-                                title={t('language')}
-                                dropdownWidth={{ width: width / 1.5 }}
-                                defaultOption={defaultLanguageLabel}
-                                options={I18N_LOCALE_LABELS}
-                                saveSelection={(language) => this.clickDropdownItem(language)}
-                            />
+                            <AnimatedComponent
+                                style={{ position: 'absolute', height: height / 1.3 }}
+                                animationInType={['fadeIn']}
+                                animationOutType={['fadeOut', 'slideOutLeft']}
+                                delay={100}
+                            >
+                                <View style={{ flex: 0.5 }} />
+                                <DropdownComponent
+                                    onRef={(c) => {
+                                        this.dropdown = c;
+                                    }}
+                                    title={t('language')}
+                                    defaultOption={defaultLanguageLabel}
+                                    options={I18N_LOCALE_LABELS}
+                                    saveSelection={(language) => this.clickDropdownItem(language)}
+                                />
+                            </AnimatedComponent>
                         </View>
                         <View style={styles.bottomContainer}>
-                            <Button
-                                onPress={() => this.onNextPress()}
-                                testID="languageSetup-next"
-                                style={{
-                                    wrapper: { backgroundColor: primary.color },
-                                    children: { color: primary.body },
-                                }}
+                            <AnimatedComponent
+                                animationInType={['fadeIn']}
+                                animationOutType={['fadeOut', 'slideOutLeft']}
+                                delay={0}
                             >
-                                {t('letsGetStarted')}
-                            </Button>
+                                <SingleFooterButton
+                                    onButtonPress={() => this.onNextPress()}
+                                    testID="languageSetup-next"
+                                    buttonText={t('letsGetStarted')}
+                                />
+                            </AnimatedComponent>
                         </View>
                     </View>
                 </View>
@@ -171,6 +196,7 @@ const mapStateToProps = (state) => ({
     theme: state.settings.theme,
     acceptedPrivacy: state.settings.acceptedPrivacy,
     acceptedTerms: state.settings.acceptedTerms,
+    forceUpdate: state.wallet.forceUpdate,
 });
 
 const mapDispatchToProps = {
@@ -179,6 +205,4 @@ const mapDispatchToProps = {
     setLocale,
 };
 
-export default WithBackPressCloseApp()(
-    withNamespaces(['languageSetup', 'global'])(connect(mapStateToProps, mapDispatchToProps)(LanguageSetup)),
-);
+export default withNamespaces(['languageSetup', 'global'])(connect(mapStateToProps, mapDispatchToProps)(LanguageSetup));

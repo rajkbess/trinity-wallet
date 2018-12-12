@@ -6,7 +6,7 @@ import { withI18n } from 'react-i18next';
 
 import { manuallySyncAccount } from 'actions/accounts';
 
-import { getAddressesForSelectedAccount, getSelectedAccountName, getSelectedAccountType } from 'selectors/accounts';
+import { getAddressesForSelectedAccount, getSelectedAccountName, getSelectedAccountMeta } from 'selectors/accounts';
 
 import {
     transitionForSnapshot,
@@ -23,6 +23,7 @@ import Scrollbar from 'ui/components/Scrollbar';
 import Button from 'ui/components/Button';
 import Loading from 'ui/components/Loading';
 import ModalConfirm from 'ui/components/modal/Confirm';
+import size from 'lodash/size';
 
 /**
  * Account tools component
@@ -49,7 +50,21 @@ class Addresses extends PureComponent {
         transitionForSnapshot: PropTypes.func.isRequired,
         /** @ignore */
         t: PropTypes.func.isRequired,
+        activeStepIndex: PropTypes.number.isRequired,
+        /** @ignore */
+        activeSteps: PropTypes.array.isRequired,
     };
+
+    static renderProgressChildren(activeStepIndex, sizeOfActiveSteps, t) {
+        if (activeStepIndex === -1) {
+            return null;
+        }
+
+        return t('snapshotTransition:attachProgress', {
+            currentAddress: activeStepIndex + 1,
+            totalAddresses: sizeOfActiveSteps,
+        });
+    }
 
     componentDidUpdate(prevProps) {
         const { wallet, ui } = this.props;
@@ -76,9 +91,9 @@ class Addresses extends PureComponent {
      * @returns {Promise}
      */
     syncAccount = async () => {
-        const { wallet, accountName, accountType } = this.props;
+        const { wallet, accountName, accountMeta } = this.props;
 
-        const seedStore = await new SeedStore[accountType](wallet.password, accountName);
+        const seedStore = await new SeedStore[accountMeta.type](wallet.password, accountName, accountMeta);
 
         this.props.manuallySyncAccount(seedStore, accountName);
     };
@@ -88,9 +103,9 @@ class Addresses extends PureComponent {
      * @returns {Promise}
      */
     startSnapshotTransition = async () => {
-        const { wallet, addresses, accountName, accountType } = this.props;
+        const { wallet, addresses, accountName, accountMeta } = this.props;
 
-        const seedStore = await new SeedStore[accountType](wallet.password, accountName);
+        const seedStore = await new SeedStore[accountMeta.type](wallet.password, accountName, accountMeta);
 
         this.props.transitionForSnapshot(seedStore, addresses);
     };
@@ -101,9 +116,9 @@ class Addresses extends PureComponent {
      */
     transitionBalanceOk = async () => {
         this.props.setBalanceCheckFlag(false);
-        const { wallet, accountName, accountType, settings } = this.props;
+        const { wallet, accountName, accountMeta, settings } = this.props;
 
-        const seedStore = await new SeedStore[accountType](wallet.password, accountName);
+        const seedStore = await new SeedStore[accountMeta.type](wallet.password, accountName, accountMeta);
 
         const powFn = !settings.remotePoW ? Electron.powFn : null;
 
@@ -116,9 +131,9 @@ class Addresses extends PureComponent {
      */
     transitionBalanceWrong = async () => {
         this.props.setBalanceCheckFlag(false);
-        const { wallet, accountName, accountType } = this.props;
+        const { wallet, accountName, accountMeta } = this.props;
 
-        const seedStore = await new SeedStore[accountType](wallet.password, accountName);
+        const seedStore = await new SeedStore[accountMeta.type](wallet.password, accountName, accountMeta);
 
         const currentIndex = wallet.transitionAddresses.length;
 
@@ -126,7 +141,8 @@ class Addresses extends PureComponent {
     };
 
     render() {
-        const { ui, wallet, t } = this.props;
+        const { ui, wallet, t, activeStepIndex, activeSteps } = this.props;
+        const sizeOfActiveSteps = size(activeSteps);
 
         if ((ui.isTransitioning || ui.isAttachingToTangle) && !wallet.balanceCheckFlag) {
             return (
@@ -144,7 +160,8 @@ class Addresses extends PureComponent {
                             ) : (
                                 <div>
                                     {t('snapshotTransition:attaching')} <br />
-                                    {t('loading:thisMayTake')} {t('global:pleaseWaitEllipses')}
+                                    {t('loading:thisMayTake')} {t('global:pleaseWaitEllipses')} <br />
+                                    {Addresses.renderProgressChildren(activeStepIndex, sizeOfActiveSteps, t)}
                                 </div>
                             )}
                         </React.Fragment>
@@ -216,8 +233,10 @@ const mapStateToProps = (state) => ({
     wallet: state.wallet,
     settings: state.settings,
     accountName: getSelectedAccountName(state),
-    accountType: getSelectedAccountType(state),
+    accountMeta: getSelectedAccountMeta(state),
     addresses: getAddressesForSelectedAccount(state),
+    activeStepIndex: state.progress.activeStepIndex,
+    activeSteps: state.progress.activeSteps,
 });
 
 const mapDispatchToProps = {

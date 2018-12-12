@@ -34,16 +34,16 @@ const getProps = (overrides) =>
             getFromKeychainError: noop,
             closeTopBar: noop,
             isSendingTransfer: false,
-            negative: { color: 'black' },
-            bar: { color: 'red', bg: 'white' },
-            body: { color: 'blue', bg: 'green' },
-            primary: {
-                color: 'white',
-                body: 'white',
-                hover: 'green',
-            },
             isTransitioning: false,
             address: '9'.repeat(81),
+            theme: {
+                body: { color: '#FFFFFF' },
+                primary: { color: '#FFFFFF' },
+                bar: {},
+                input: {},
+                dark: {},
+                secondary: {},
+            },
             amount: '10',
             message: 'baz',
             setSendAddressField: noop,
@@ -51,14 +51,13 @@ const getProps = (overrides) =>
             setSendMessageField: noop,
             setSendDenomination: noop,
             denomination: 'i',
-            theme: {},
             resetProgress: noop,
             startTrackingProgress: noop,
             activeStepIndex: 0,
             activeSteps: [],
             timeTakenByEachProgressStep: [],
             remotePoW: false,
-            password: 'foo',
+            password: {},
             makeTransaction: noop,
             generateTransferErrorAlert: noop,
             availableBalance: 100,
@@ -69,6 +68,8 @@ const getProps = (overrides) =>
             isIOSKeyboardActive: false,
             toggleModalActivity: noop,
             isModalActive: false,
+            selectedAccountType: 'keychain',
+            isKeyboardActive: false,
         },
         overrides,
     );
@@ -76,7 +77,7 @@ const getProps = (overrides) =>
 describe('Testing Send component', () => {
     describe('instance methods', () => {
         describe('when called', () => {
-            describe('#resetToggleSwitch', () => {
+            describe('#resetMaxPressed', () => {
                 describe('when state prop maxPressed is false', () => {
                     it('should not set maxPressed prop to true', () => {
                         const props = getProps();
@@ -86,7 +87,7 @@ describe('Testing Send component', () => {
 
                         expect(wrapper.state().maxPressed).toEqual(false);
 
-                        instance.resetToggleSwitch();
+                        instance.resetMaxPressed();
 
                         expect(wrapper.state().maxPressed).toEqual(false);
                     });
@@ -101,7 +102,7 @@ describe('Testing Send component', () => {
 
                         wrapper.setState({ maxPressed: true });
 
-                        instance.resetToggleSwitch();
+                        instance.resetMaxPressed();
 
                         expect(wrapper.state().maxPressed).toEqual(false);
                     });

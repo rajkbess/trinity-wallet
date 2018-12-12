@@ -1,21 +1,20 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { StyleSheet, View, Text, TouchableOpacity, Alert } from 'react-native';
+import { navigator } from 'libs/navigation';
 import { setFingerprintStatus } from 'shared-modules/actions/settings';
+import { toggleModalActivity } from 'shared-modules/actions/ui';
 import { generateAlert } from 'shared-modules/actions/alerts';
 import { connect } from 'react-redux';
 import FingerprintScanner from 'react-native-fingerprint-scanner';
 import { withNamespaces } from 'react-i18next';
-import Modal from 'react-native-modal';
-import WithBackPressGoToHome from 'ui/components/BackPressGoToHome';
-import DynamicStatusBar from 'ui/components/DynamicStatusBar';
-import FingerPrintModal from 'ui/components/FingerprintModal';
 import Fonts from 'ui/theme/fonts';
-import StatefulDropdownAlert from 'ui/components/StatefulDropdownAlert';
 import { width, height } from 'libs/dimensions';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import { Icon } from 'ui/theme/icons';
-import Button from 'ui/components/Button';
+import Header from 'ui/components/Header';
+import SingleFooterButton from 'ui/components/SingleFooterButton';
+import AnimatedComponent from 'ui/components/AnimatedComponent';
 import { isAndroid, isIPhoneX } from 'libs/device';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
@@ -26,14 +25,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     topWrapper: {
-        flex: 0.3,
+        flex: 0.65,
         alignItems: 'center',
         justifyContent: 'flex-start',
-        paddingTop: height / 16,
         width,
     },
     midWrapper: {
-        flex: 2,
+        flex: 3.9,
         alignItems: 'center',
         justifyContent: 'flex-start',
         paddingHorizontal: width / 10,
@@ -45,30 +43,23 @@ const styles = StyleSheet.create({
     },
     subHeaderText: {
         fontFamily: Fonts.secondary,
-        fontSize: GENERAL.fontSize5,
+        fontSize: Styling.fontSize5,
         textAlign: 'center',
         backgroundColor: 'transparent',
+        paddingTop: height / 20,
     },
     infoText: {
         fontFamily: Fonts.secondary,
-        fontSize: GENERAL.fontSize4,
+        fontSize: Styling.fontSize4,
         textAlign: 'center',
         backgroundColor: 'transparent',
-    },
-    modal: {
-        height,
-        width,
-        justifyContent: 'center',
-        alignItems: 'center',
-        margin: 0,
+        width: width / 1.2,
     },
     button: {
         width: width / 1.65,
-        height: height / 3.3,
         alignItems: 'center',
-        justifyContent: 'space-between',
         padding: width / 12,
-        borderRadius: GENERAL.borderRadius,
+        borderRadius: Styling.borderRadius,
         borderWidth: 1,
     },
 });
@@ -76,6 +67,8 @@ const styles = StyleSheet.create({
 /** Fingerprint enable component */
 class FingerprintEnable extends Component {
     static propTypes = {
+        /** Component ID */
+        componentId: PropTypes.string.isRequired,
         /** @ignore */
         generateAlert: PropTypes.func.isRequired,
         /** @ignore */
@@ -86,13 +79,12 @@ class FingerprintEnable extends Component {
         t: PropTypes.func.isRequired,
         /** @ignore */
         isFingerprintEnabled: PropTypes.bool.isRequired,
-        /** Navigation object */
-        navigator: PropTypes.object.isRequired,
+        /** @ignore */
+        toggleModalActivity: PropTypes.func.isRequired,
     };
 
     constructor(props) {
         super(props);
-        this.state = { isModalVisible: false };
         this.navigateToHome = this.navigateToHome.bind(this);
         this.handleAuthenticationAttempted = this.handleAuthenticationAttempted.bind(this);
         this.navigateToHome = this.navigateToHome.bind(this);
@@ -131,16 +123,23 @@ class FingerprintEnable extends Component {
     }
 
     openModal() {
-        this.setState({ isModalVisible: true });
+        const { theme, isFingerprintEnabled } = this.props;
+        this.props.toggleModalActivity('fingerprint', {
+            hideModal: this.hideModal,
+            theme,
+            isFingerprintEnabled,
+            instance: 'setup',
+        });
     }
 
     activateFingerprintScanner() {
         const { t } = this.props;
-        if (isAndroid) {
-            this.openModal();
-        }
+
         FingerprintScanner.isSensorAvailable()
-            .then(
+            .then(() => {
+                if (isAndroid) {
+                    this.openModal();
+                }
                 FingerprintScanner.authenticate({
                     description: t('instructionsEnable'),
                     onAttempt: this.handleAuthenticationAttempted,
@@ -164,8 +163,8 @@ class FingerprintEnable extends Component {
                             t('fingerprintAuthFailed'),
                             t('fingerprintAuthFailedExplanation'),
                         );
-                    }),
-            )
+                    });
+            })
             .catch(() => {
                 this.props.generateAlert('error', t('fingerprintUnavailable'), t('fingerprintUnavailableExplanation'));
             });
@@ -204,17 +203,14 @@ class FingerprintEnable extends Component {
     }
 
     navigateToHome() {
-        this.props.navigator.pop({
-            animated: false,
-        });
+        navigator.pop(this.props.componentId);
     }
 
     hideModal() {
-        this.setState({ isModalVisible: false });
+        this.props.toggleModalActivity();
     }
 
     render() {
-        const { isModalVisible } = this.state;
         const { t, isFingerprintEnabled, theme } = this.props;
         const backgroundColor = { backgroundColor: theme.body.bg };
         const textColor = { color: theme.body.color };
@@ -223,58 +219,51 @@ class FingerprintEnable extends Component {
 
         return (
             <View style={[styles.container, backgroundColor]}>
-                <DynamicStatusBar backgroundColor={theme.body.bg} />
                 <View style={styles.topWrapper}>
-                    <Icon name="iota" size={width / 8} color={theme.body.color} />
+                    <AnimatedComponent
+                        animationInType={['slideInRight', 'fadeIn']}
+                        animationOutType={['slideOutLeft', 'fadeOut']}
+                        delay={400}
+                    >
+                        <Header textColor={theme.body.color} />
+                    </AnimatedComponent>
                 </View>
                 <View style={styles.midWrapper}>
                     <View style={{ flex: 0.25 }} />
-                    <Text style={[styles.infoText, textColor]}>{instructions}</Text>
-                    <View style={{ flex: 0.2 }} />
-                    <TouchableOpacity
-                        onPress={this.onFingerprintPress}
-                        style={[styles.button, { borderColor: theme.body.color }]}
+                    <AnimatedComponent
+                        animationInType={['slideInRight', 'fadeIn']}
+                        animationOutType={['slideOutLeft', 'fadeOut']}
+                        delay={266}
                     >
-                        <Icon name="fingerprintLarge" size={width / 4.6} color={theme.body.color} />
-                        <Text style={[styles.subHeaderText, textColor]}>{authenticationStatus}</Text>
-                    </TouchableOpacity>
+                        <Text style={[styles.infoText, textColor]}>{instructions}</Text>
+                    </AnimatedComponent>
+                    <View style={{ flex: 0.2 }} />
+                    <AnimatedComponent
+                        animationInType={['slideInRight', 'fadeIn']}
+                        animationOutType={['slideOutLeft', 'fadeOut']}
+                        delay={133}
+                    >
+                        <TouchableOpacity
+                            onPress={this.onFingerprintPress}
+                            style={[styles.button, { borderColor: theme.body.color }]}
+                        >
+                            <Icon name="fingerprint" size={width / 4.6} color={theme.body.color} />
+                            <Text style={[styles.subHeaderText, textColor]}>{authenticationStatus}</Text>
+                        </TouchableOpacity>
+                    </AnimatedComponent>
                 </View>
                 <View style={styles.bottomWrapper}>
-                    <Button
-                        onPress={() => this.navigateToHome()}
-                        style={{
-                            wrapper: { backgroundColor: theme.primary.color },
-                            children: { color: theme.primary.body },
-                        }}
-                    >
-                        {t('global:done')}
-                    </Button>
+                    <AnimatedComponent animationInType={['fadeIn']} animationOutType={['fadeOut']} delay={0}>
+                        <SingleFooterButton
+                            onButtonPress={() => this.navigateToHome()}
+                            buttonStyle={{
+                                wrapper: { backgroundColor: theme.primary.color },
+                                children: { color: theme.primary.body },
+                            }}
+                            buttonText={t('global:done')}
+                        />
+                    </AnimatedComponent>
                 </View>
-                <StatefulDropdownAlert textColor={theme.body.color} backgroundColor={theme.body.bg} />
-                <Modal
-                    animationIn={isAndroid ? 'bounceInUp' : 'zoomIn'}
-                    animationOut={isAndroid ? 'bounceOut' : 'zoomOut'}
-                    animationInTiming={isAndroid ? 1000 : 300}
-                    animationOutTiming={200}
-                    backdropTransitionInTiming={isAndroid ? 500 : 300}
-                    backdropTransitionOutTiming={200}
-                    backdropOpacity={0.9}
-                    backdropColor={theme.body.bg}
-                    style={styles.modal}
-                    isVisible={isModalVisible}
-                    onBackButtonPress={this.hideModal}
-                    hideModalContentWhileAnimating
-                    useNativeDriver={isAndroid ? true : false}
-                >
-                    <FingerPrintModal
-                        hideModal={this.hideModal}
-                        borderColor={{ borderColor: theme.body.color }}
-                        textColor={textColor}
-                        backgroundColor={backgroundColor}
-                        instance="setup"
-                        isFingerprintEnabled={isFingerprintEnabled}
-                    />
-                </Modal>
             </View>
         );
     }
@@ -288,8 +277,9 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = {
     setFingerprintStatus,
     generateAlert,
+    toggleModalActivity,
 };
 
-export default WithBackPressGoToHome()(
-    withNamespaces(['fingerprintSetup', 'global'])(connect(mapStateToProps, mapDispatchToProps)(FingerprintEnable)),
+export default withNamespaces(['fingerprintSetup', 'global'])(
+    connect(mapStateToProps, mapDispatchToProps)(FingerprintEnable),
 );

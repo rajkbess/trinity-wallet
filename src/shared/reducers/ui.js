@@ -1,3 +1,4 @@
+import merge from 'lodash/merge';
 import { ActionTypes as SettingsActionTypes } from '../actions/settings';
 import { ActionTypes as UiActionTypes } from '../actions/ui';
 import { ActionTypes as TransfersActionTypes } from '../actions/transfers';
@@ -33,11 +34,15 @@ const initialState = {
     /**
      * Determines if wallet is fetching account information from tangle after a successful login
      */
-    isFetchingLatestAccountInfoOnLogin: false,
+    isFetchingAccountInfo: false,
     /**
      * Determines if wallet has an error fetching account information from tangle after a successful login
      */
-    hasErrorFetchingAccountInfoOnLogin: false,
+    hasErrorFetchingFullAccountInfo: false,
+    /**
+     * Determines if wallet has an error fetching account information from tangle
+     */
+    hasErrorFetchingAccountInfo: false,
     /**
      * Determines if wallet is making a transaction
      */
@@ -90,6 +95,17 @@ const initialState = {
      */
     isModalActive: false,
     /**
+     * Modal props
+     */
+    modalProps: {},
+    /**
+     * Modal content
+     */
+    modalContent: 'snapshotTransitionInfo',
+    /**
+     * Determines if wallet is checking state/health of the newly added custom node
+     */
+    /**
      * Determines if wallet is checking state/health of the newly added custom node
      */
     isCheckingCustomNode: false,
@@ -130,9 +146,14 @@ const initialState = {
      */
     selectedQrTab: 'message',
     /**
-     * Determines if receive card is flipped on receive screen
+     * Current navigation route
      */
-    isReceiveCardFlipped: false,
+    currentRoute: 'login',
+    /**
+     * Determines whether an error occurred during address generation
+     */
+    hadErrorGeneratingNewAddress: false,
+    isKeyboardActive: false,
 };
 
 export default (state = initialState, action) => {
@@ -222,8 +243,14 @@ export default (state = initialState, action) => {
             return {
                 ...state,
                 isGeneratingReceiveAddress: true,
+                hadErrorGeneratingNewAddress: false,
             };
         case WalletActionTypes.GENERATE_NEW_ADDRESS_ERROR:
+            return {
+                ...state,
+                isGeneratingReceiveAddress: false,
+                hadErrorGeneratingNewAddress: true,
+            };
         case WalletActionTypes.GENERATE_NEW_ADDRESS_SUCCESS:
             return {
                 ...state,
@@ -246,11 +273,12 @@ export default (state = initialState, action) => {
                 isGeneratingReceiveAddress: false,
                 isFetchingCurrencyData: false,
                 hasErrorFetchingCurrencyData: false,
+                hasErrorFetchingAccountInfo: false,
                 isPromotingTransaction: false,
                 isTransitioning: false,
                 isAttachingToTangle: false,
-                isFetchingLatestAccountInfoOnLogin: false,
-                hasErrorFetchingAccountInfoOnLogin: false,
+                isFetchingAccountInfo: false,
+                hasErrorFetchingFullAccountInfo: false,
                 isSendingTransfer: false,
                 isSyncing: false,
                 inactive: false,
@@ -272,35 +300,40 @@ export default (state = initialState, action) => {
                 qrTag: '',
                 qrDenomination: 'i',
                 selectedQrTab: 'message',
-                isReceiveCardFlipped: false,
             };
         case AccountsActionTypes.FULL_ACCOUNT_INFO_FETCH_REQUEST:
             return {
                 ...state,
-                isFetchingLatestAccountInfoOnLogin: true,
-                hasErrorFetchingAccountInfoOnLogin: false,
+                isFetchingAccountInfo: true,
+                hasErrorFetchingFullAccountInfo: false,
             };
         case AccountsActionTypes.FULL_ACCOUNT_INFO_FETCH_ERROR:
             return {
                 ...state,
-                isFetchingLatestAccountInfoOnLogin: false,
-                hasErrorFetchingAccountInfoOnLogin: true,
+                isFetchingAccountInfo: false,
+                hasErrorFetchingFullAccountInfo: true,
             };
         case AccountsActionTypes.FULL_ACCOUNT_INFO_FETCH_SUCCESS:
             return {
                 ...state,
-                isFetchingLatestAccountInfoOnLogin: false,
+                isFetchingAccountInfo: false,
             };
         case AccountsActionTypes.ACCOUNT_INFO_FETCH_REQUEST:
             return {
                 ...state,
-                isFetchingLatestAccountInfoOnLogin: true,
+                isFetchingAccountInfo: true,
+                hasErrorFetchingAccountInfo: false,
             };
         case AccountsActionTypes.ACCOUNT_INFO_FETCH_SUCCESS:
+            return {
+                ...state,
+                isFetchingAccountInfo: false,
+            };
         case AccountsActionTypes.ACCOUNT_INFO_FETCH_ERROR:
             return {
                 ...state,
-                isFetchingLatestAccountInfoOnLogin: false,
+                isFetchingAccountInfo: false,
+                hasErrorFetchingAccountInfo: true,
             };
         case AccountsActionTypes.MANUAL_SYNC_REQUEST:
             return {
@@ -353,6 +386,13 @@ export default (state = initialState, action) => {
             return {
                 ...state,
                 isModalActive: !state.isModalActive,
+                modalProps: action.modalProps ? action.modalProps : state.modalProps,
+                modalContent: action.modalContent ? action.modalContent : state.modalContent,
+            };
+        case UiActionTypes.UPDATE_MODAL_PROPS:
+            return {
+                ...state,
+                modalProps: merge({}, state.modalProps, action.payload),
             };
         case SettingsActionTypes.SET_NODE_REQUEST:
             return {
@@ -425,10 +465,15 @@ export default (state = initialState, action) => {
                 ...state,
                 selectedQrTab: action.payload,
             };
-        case UiActionTypes.FLIP_RECEIVE_CARD:
+        case UiActionTypes.SET_ROUTE:
             return {
                 ...state,
-                isReceiveCardFlipped: !state.isReceiveCardFlipped,
+                currentRoute: action.payload,
+            };
+        case UiActionTypes.SET_KEYBOARD_ACTIVITY:
+            return {
+                ...state,
+                isKeyboardActive: action.payload,
             };
         default:
             return state;

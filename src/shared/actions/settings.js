@@ -1,10 +1,11 @@
 import get from 'lodash/get';
 import keys from 'lodash/keys';
-import { changeIotaNode } from '../libs/iota';
+import { changeIotaNode } from '../libs/iota/index';
 import { generateAlert } from './alerts';
 import i18next from '../libs/i18next';
-import { isNodeSynced, checkAttachToTangleAsync } from '../libs/iota/extendedApi';
+import { checkAttachToTangleAsync } from '../libs/iota/extendedApi';
 import { getSelectedNodeFromState } from '../selectors/accounts';
+import { throwIfNodeNotSynced } from '../libs/iota/utils';
 import Errors from '../libs/errors';
 
 export const ActionTypes = {
@@ -36,13 +37,13 @@ export const ActionTypes = {
     SET_FINGERPRINT_STATUS: 'IOTA/SETTINGS/SET_FINGERPRINT_STATUS',
     ACCEPT_TERMS: 'IOTA/SETTINGS/ACCEPT_TERMS',
     ACCEPT_PRIVACY: 'IOTA/SETTINGS/ACCEPT_PRIVACY',
-    SET_SEED_SHARE_TUTORIAL_VISITATION_STATUS: 'IOTA/SETTINGS/SET_SEED_SHARE_TUTORIAL_VISITATION_STATUS',
     TOGGLE_EMPTY_TRANSACTIONS: 'IOTA/SETTINGS/TOGGLE_EMPTY_TRANSACTIONS',
     SET_COMPLETED_FORCED_PASSWORD_UPDATE: 'IOTA/SETTINGS/SET_COMPLETED_FORCED_PASSWORD_UPDATE',
     SET_BYTETRIT_STATUS: 'IOTA/SETTINGS/SET_BYTETRIT_STATUS',
     SET_BYTETRIT_INFO: 'IOTA/SETTINGS/SET_BYTETRIT_INFO',
     SET_TRAY: 'IOTA/SETTINGS/SET_TRAY',
     SET_NOTIFICATIONS: 'IOTA/SETTINGS/SET_NOTIFICATIONS',
+    SET_PROXY: 'SET_PROXY',
 };
 
 /**
@@ -290,19 +291,6 @@ export const setLockScreenTimeout = (payload) => ({
 });
 
 /**
- * Dispatch to mark Android seed share tutorial visit as completed
- *
- * @method setSeedShareTutorialVisitationStatus
- * @param {boolean} payload
- *
- * @returns {{type: {string}, payload: {boolean} }}
- */
-export const setSeedShareTutorialVisitationStatus = (payload) => ({
-    type: ActionTypes.SET_SEED_SHARE_TUTORIAL_VISITATION_STATUS,
-    payload,
-});
-
-/**
  * Change wallet's active language
  *
  * @method setLocale
@@ -444,15 +432,8 @@ export function setFullNode(node, addingCustomNode = false) {
     return (dispatch) => {
         dispatch(dispatcher.request());
 
-        // Passing in provider will create a new IOTA instance
-        isNodeSynced(node)
-            .then((isSynced) => {
-                if (!isSynced) {
-                    throw new Error(Errors.NODE_NOT_SYNCED);
-                }
-
-                return checkAttachToTangleAsync(node);
-            })
+        throwIfNodeNotSynced(node)
+            .then(() => checkAttachToTangleAsync(node))
             .then((res) => {
                 // Change IOTA provider on the global iota instance
                 changeIotaNode(node);
@@ -693,5 +674,18 @@ export const setTray = (payload) => ({
  */
 export const setNotifications = (payload) => ({
     type: ActionTypes.SET_NOTIFICATIONS,
+    payload,
+});
+
+/**
+ * Dispatch to update proxy settings
+ *
+ * @method setProxy
+ * @param {boolean} payload
+ *
+ * @returns {{type: {string}, payload: {boolean} }}
+ */
+export const setProxy = (payload) => ({
+    type: ActionTypes.SET_PROXY,
     payload,
 });

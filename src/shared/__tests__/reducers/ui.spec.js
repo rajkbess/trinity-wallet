@@ -11,8 +11,9 @@ describe('Reducer: ui', () => {
                 isPromotingTransaction: false,
                 isTransitioning: false,
                 isAttachingToTangle: false,
-                isFetchingLatestAccountInfoOnLogin: false,
-                hasErrorFetchingAccountInfoOnLogin: false,
+                isFetchingAccountInfo: false,
+                hasErrorFetchingAccountInfo: false,
+                hasErrorFetchingFullAccountInfo: false,
                 isSendingTransfer: false,
                 isSyncing: false,
                 inactive: false,
@@ -38,7 +39,11 @@ describe('Reducer: ui', () => {
                 qrMessage: '',
                 qrTag: '',
                 selectedQrTab: 'message',
-                isReceiveCardFlipped: false,
+                modalContent: 'snapshotTransitionInfo',
+                modalProps: {},
+                currentRoute: 'login',
+                hadErrorGeneratingNewAddress: false,
+                isKeyboardActive: false,
             };
 
             expect(reducer(undefined, {})).to.eql(initialState);
@@ -442,6 +447,7 @@ describe('Reducer: ui', () => {
         it('should set "isGeneratingReceiveAddress" state prop to true', () => {
             const initialState = {
                 isGeneratingReceiveAddress: false,
+                hadErrorGeneratingNewAddress: false,
             };
 
             const action = {
@@ -451,6 +457,7 @@ describe('Reducer: ui', () => {
             const newState = reducer(initialState, action);
             const expectedState = {
                 isGeneratingReceiveAddress: true,
+                hadErrorGeneratingNewAddress: false,
             };
 
             expect(newState).to.eql(expectedState);
@@ -480,6 +487,7 @@ describe('Reducer: ui', () => {
         it('should set "isGeneratingReceiveAddress" state prop to true', () => {
             const initialState = {
                 isGeneratingReceiveAddress: true,
+                hadErrorGeneratingNewAddress: false,
             };
 
             const action = {
@@ -489,6 +497,7 @@ describe('Reducer: ui', () => {
             const newState = reducer(initialState, action);
             const expectedState = {
                 isGeneratingReceiveAddress: false,
+                hadErrorGeneratingNewAddress: true,
             };
 
             expect(newState).to.eql(expectedState);
@@ -640,9 +649,9 @@ describe('Reducer: ui', () => {
     });
 
     describe('IOTA/ACCOUNTS/FULL_ACCOUNT_INFO_FETCH_REQUEST', () => {
-        it('should set "hasErrorFetchingAccountInfoOnLogin" state prop to false', () => {
+        it('should set "hasErrorFetchingAccountInfo" state prop to false', () => {
             const initialState = {
-                hasErrorFetchingAccountInfoOnLogin: true,
+                hasErrorFetchingFullAccountInfo: true,
             };
 
             const action = {
@@ -651,8 +660,8 @@ describe('Reducer: ui', () => {
 
             const newState = reducer(initialState, action);
             const expectedState = {
-                hasErrorFetchingAccountInfoOnLogin: false,
-                isFetchingLatestAccountInfoOnLogin: true,
+                hasErrorFetchingFullAccountInfo: false,
+                isFetchingAccountInfo: true,
             };
 
             expect(newState).to.eql(expectedState);
@@ -660,9 +669,9 @@ describe('Reducer: ui', () => {
     });
 
     describe('IOTA/ACCOUNTS/FULL_ACCOUNT_INFO_FETCH_ERROR', () => {
-        it('should set "hasErrorFetchingAccountInfoOnLogin" state prop to true', () => {
+        it('should set "hasErrorFetchingAccountInfo" state prop to true', () => {
             const initialState = {
-                hasErrorFetchingAccountInfoOnLogin: false,
+                hasErrorFetchingFullAccountInfo: false,
             };
 
             const action = {
@@ -671,8 +680,8 @@ describe('Reducer: ui', () => {
 
             const newState = reducer(initialState, action);
             const expectedState = {
-                hasErrorFetchingAccountInfoOnLogin: true,
-                isFetchingLatestAccountInfoOnLogin: false,
+                hasErrorFetchingFullAccountInfo: true,
+                isFetchingAccountInfo: false,
             };
 
             expect(newState).to.eql(expectedState);
@@ -680,9 +689,10 @@ describe('Reducer: ui', () => {
     });
 
     describe('IOTA/ACCOUNTS/ACCOUNT_INFO_FETCH_REQUEST', () => {
-        it('should set "isFetchingLatestAccountInfoOnLogin" state prop to true', () => {
+        it('should set "isFetchingAccountInfo" state prop to true', () => {
             const initialState = {
-                isFetchingLatestAccountInfoOnLogin: false,
+                isFetchingAccountInfo: false,
+                hasErrorFetchingAccountInfo: false,
             };
 
             const action = {
@@ -691,7 +701,8 @@ describe('Reducer: ui', () => {
 
             const newState = reducer(initialState, action);
             const expectedState = {
-                isFetchingLatestAccountInfoOnLogin: true,
+                isFetchingAccountInfo: true,
+                hasErrorFetchingAccountInfo: false,
             };
 
             expect(newState).to.eql(expectedState);
@@ -699,9 +710,9 @@ describe('Reducer: ui', () => {
     });
 
     describe('IOTA/ACCOUNTS/ACCOUNT_INFO_FETCH_SUCCESS', () => {
-        it('should set "isFetchingLatestAccountInfoOnLogin" state prop to false', () => {
+        it('should set "isFetchingAccountInfo" state prop to false', () => {
             const initialState = {
-                isFetchingLatestAccountInfoOnLogin: true,
+                isFetchingAccountInfo: true,
             };
 
             const action = {
@@ -710,7 +721,7 @@ describe('Reducer: ui', () => {
 
             const newState = reducer(initialState, action);
             const expectedState = {
-                isFetchingLatestAccountInfoOnLogin: false,
+                isFetchingAccountInfo: false,
             };
 
             expect(newState).to.eql(expectedState);
@@ -718,9 +729,10 @@ describe('Reducer: ui', () => {
     });
 
     describe('IOTA/ACCOUNTS/ACCOUNT_INFO_FETCH_ERROR', () => {
-        it('should set "isFetchingLatestAccountInfoOnLogin" state prop to true', () => {
+        it('should set "isFetchingAccountInfo" state prop to true', () => {
             const initialState = {
-                isFetchingLatestAccountInfoOnLogin: true,
+                isFetchingAccountInfo: true,
+                hasErrorFetchingAccountInfo: false,
             };
 
             const action = {
@@ -729,7 +741,8 @@ describe('Reducer: ui', () => {
 
             const newState = reducer(initialState, action);
             const expectedState = {
-                isFetchingLatestAccountInfoOnLogin: false,
+                isFetchingAccountInfo: false,
+                hasErrorFetchingAccountInfo: true,
             };
 
             expect(newState).to.eql(expectedState);
@@ -940,15 +953,21 @@ describe('Reducer: ui', () => {
         it('should set "isModalActive" state prop to true', () => {
             const initialState = {
                 isModalActive: false,
+                modalContent: 'snapshotTransitionInfo',
+                modalProps: {},
             };
 
             const action = {
                 type: 'IOTA/UI/TOGGLE_MODAL_ACTIVITY',
+                modalContent: 'unitInfo',
+                modalProps: {},
             };
 
             const newState = reducer(initialState, action);
             const expectedState = {
                 isModalActive: true,
+                modalContent: 'unitInfo',
+                modalProps: {},
             };
 
             expect(newState).to.eql(expectedState);
@@ -959,6 +978,8 @@ describe('Reducer: ui', () => {
         it('should set "isModalActive" state prop to false', () => {
             const initialState = {
                 isModalActive: true,
+                modalContent: 'snapshotTransitionInfo',
+                modalProps: {},
             };
 
             const action = {
@@ -968,6 +989,8 @@ describe('Reducer: ui', () => {
             const newState = reducer(initialState, action);
             const expectedState = {
                 isModalActive: false,
+                modalContent: 'snapshotTransitionInfo',
+                modalProps: {},
             };
 
             expect(newState).to.eql(expectedState);

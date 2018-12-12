@@ -11,7 +11,7 @@ import { width, height } from 'libs/dimensions';
 import { Icon } from 'ui/theme/icons';
 import InfoBox from 'ui/components/InfoBox';
 import Toggle from 'ui/components/Toggle';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
 const styles = StyleSheet.create({
@@ -35,10 +35,9 @@ const styles = StyleSheet.create({
     },
     infoText: {
         fontFamily: Fonts.secondary,
-        fontSize: GENERAL.fontSize3,
-        paddingTop: height / 60,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
-        textAlign: 'left',
+        textAlign: 'center',
     },
     itemLeft: {
         flexDirection: 'row',
@@ -47,13 +46,13 @@ const styles = StyleSheet.create({
     },
     titleTextLeft: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         marginLeft: width / 20,
     },
     toggleText: {
         fontFamily: Fonts.secondary,
-        fontSize: GENERAL.fontSize4,
+        fontSize: Styling.fontSize4,
         backgroundColor: 'transparent',
         textAlign: 'center',
     },
@@ -91,10 +90,11 @@ class ModeSelection extends Component {
     }
 
     changeMode() {
-        const { mode } = this.props;
+        const { mode, setMode, generateAlert, t } = this.props;
         const nextMode = mode === 'Advanced' ? 'Standard' : 'Advanced';
-        this.props.setMode(nextMode);
-        this.props.generateAlert('success', 'Mode updated', `You have changed to ${nextMode} mode.`);
+        const translatedMode = nextMode === 'Advanced' ? t('advanced') : t('standard');
+        setMode(nextMode);
+        generateAlert('success', t('modeUpdated'), t('modeUpdatedExplanation', { mode: translatedMode }));
     }
 
     render() {
@@ -106,17 +106,12 @@ class ModeSelection extends Component {
                 <View style={styles.container}>
                     <View style={styles.topContainer}>
                         <View style={{ flex: 2.3 }} />
-                        <InfoBox
-                            body={body}
-                            text={
-                                <View>
-                                    <Text style={[styles.infoText, textColor]}>{t('advancedModeExplanation')}</Text>
-                                    <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
-                                        {t('modesExplanation')}
-                                    </Text>
-                                </View>
-                            }
-                        />
+                        <InfoBox>
+                            <Text style={[styles.infoText, textColor]}>{t('advancedModeExplanation')}</Text>
+                            <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
+                                {t('modesExplanation')}
+                            </Text>
+                        </InfoBox>
                         <View style={{ flex: 0.8 }} />
                         <TouchableWithoutFeedback
                             onPress={this.changeMode}

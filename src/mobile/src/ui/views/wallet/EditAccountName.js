@@ -7,7 +7,7 @@ import { withNamespaces } from 'react-i18next';
 import {
     getAccountNamesFromState,
     getSelectedAccountName,
-    getSelectedAccountType,
+    getSelectedAccountMeta,
 } from 'shared-modules/selectors/accounts';
 import { generateAlert } from 'shared-modules/actions/alerts';
 import { setSetting } from 'shared-modules/actions/wallet';
@@ -16,7 +16,7 @@ import SeedStore from 'libs/SeedStore';
 import CustomTextInput from 'ui/components/CustomTextInput';
 import { width, height } from 'libs/dimensions';
 import { Icon } from 'ui/theme/icons';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
 const styles = StyleSheet.create({
@@ -54,13 +54,13 @@ const styles = StyleSheet.create({
     },
     titleTextLeft: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         marginLeft: width / 20,
     },
     titleTextRight: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         marginRight: width / 20,
     },
@@ -71,8 +71,8 @@ export class EditAccountName extends Component {
     static propTypes = {
         /** Account name for selected account */
         selectedAccountName: PropTypes.string.isRequired,
-        /** Account type for selected account */
-        selectedAccountType: PropTypes.string.isRequired,
+        /** Account meta for selected account */
+        selectedAccountMeta: PropTypes.object.isRequired,
         /** @ignore */
         accountNames: PropTypes.array.isRequired,
         /** @ignore */
@@ -114,7 +114,7 @@ export class EditAccountName extends Component {
      * @method save
      */
     save(accountName) {
-        const { accountNames, password, selectedAccountName, selectedAccountType, t } = this.props;
+        const { accountNames, password, selectedAccountName, selectedAccountMeta, t } = this.props;
 
         if (accountNames.includes(accountName)) {
             this.props.generateAlert(
@@ -123,7 +123,7 @@ export class EditAccountName extends Component {
                 t('addAdditionalSeed:nameInUseExplanation'),
             );
         } else {
-            const seedStore = new SeedStore[selectedAccountType](password, selectedAccountName);
+            const seedStore = new SeedStore[selectedAccountMeta.type](password, selectedAccountName);
 
             seedStore
                 .accountRename(accountName)
@@ -158,7 +158,6 @@ export class EditAccountName extends Component {
                             <CustomTextInput
                                 label={t('accountName')}
                                 onChangeText={(accountName) => this.setState({ accountName })}
-                                containerStyle={{ width: width / 1.15 }}
                                 autoCapitalize="none"
                                 autoCorrect={false}
                                 enablesReturnKeyAutomatically
@@ -198,7 +197,7 @@ export class EditAccountName extends Component {
 
 const mapStateToProps = (state) => ({
     selectedAccountName: getSelectedAccountName(state),
-    selectedAccountType: getSelectedAccountType(state),
+    selectedAccountMeta: getSelectedAccountMeta(state),
     accountNames: getAccountNamesFromState(state),
     password: state.wallet.password,
     theme: state.settings.theme,

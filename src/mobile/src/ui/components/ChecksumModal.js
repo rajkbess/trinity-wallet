@@ -1,36 +1,30 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
+import { Styling } from 'ui/theme/general';
 import { withNamespaces } from 'react-i18next';
-import GENERAL from 'ui/theme/general';
-import { width, height } from 'libs/dimensions';
-import InfoBox from './InfoBox';
+import { height, width } from 'libs/dimensions';
+import { Icon } from 'ui/theme/icons';
+import ModalView from './ModalView';
 
 const styles = StyleSheet.create({
-    okButton: {
-        borderWidth: 1.2,
-        borderRadius: GENERAL.borderRadius,
-        width: width / 2.7,
-        height: height / 14,
-        alignItems: 'center',
-        justifyContent: 'space-around',
-    },
-    okText: {
-        fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
-        backgroundColor: 'transparent',
-    },
-    modalText: {
+    questionText: {
         color: 'white',
         fontFamily: 'SourceSansPro-Light',
-        fontSize: GENERAL.fontSize3,
-        textAlign: 'left',
+        fontSize: Styling.fontSize6,
+        textAlign: 'center',
         backgroundColor: 'transparent',
     },
-    modalTextBold: {
-        fontFamily: 'SourceSansPro-Bold',
-        fontSize: GENERAL.fontSize3,
-        textAlign: 'left',
+    infoText: {
+        fontFamily: 'SourceSansPro-Light',
+        fontSize: Styling.fontSize3,
+        textAlign: 'center',
+        backgroundColor: 'transparent',
+        width: width - width / 8,
+    },
+    icon: {
+        opacity: 0.6,
+        paddingVertical: height / 20,
         backgroundColor: 'transparent',
     },
 });
@@ -42,40 +36,21 @@ export class ChecksumModal extends PureComponent {
         /** Close active modal */
         closeModal: PropTypes.func.isRequired,
         /** @ignore */
-        body: PropTypes.object.isRequired,
-        /** @ignore */
-        primary: PropTypes.object.isRequired,
+        theme: PropTypes.object.isRequired,
     };
 
     render() {
-        const { t, body, primary } = this.props;
+        const { t, theme: { body } } = this.props;
 
         return (
-            <View style={{ backgroundColor: body.bg }}>
-                <InfoBox
-                    body={body}
-                    width={width / 1.15}
-                    text={
-                        <View>
-                            <Text style={[styles.modalTextBold, { color: body.color }, { paddingTop: height / 40 }]}>
-                                {t('saveYourSeed:whatIsChecksum')}
-                            </Text>
-                            <Text style={[styles.modalText, { color: body.color }, { paddingTop: height / 60 }]}>
-                                {t('saveYourSeed:checksumExplanation')}
-                            </Text>
-                            <View style={{ paddingTop: height / 20, alignItems: 'center' }}>
-                                <TouchableOpacity onPress={() => this.props.closeModal()}>
-                                    <View style={[styles.okButton, { borderColor: primary.color }]}>
-                                        <Text style={[styles.okText, { color: primary.color }]}>
-                                            {t('global:okay')}
-                                        </Text>
-                                    </View>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    }
-                />
-            </View>
+            <ModalView onButtonPress={() => this.props.closeModal()} buttonText={t('okay')}>
+                <Text style={[styles.questionText, { color: body.color }]}>{t('saveYourSeed:whatIsAChecksum')}</Text>
+                <Icon name="security" size={width / 5} color={body.color} style={styles.icon} />
+                <Text style={[styles.infoText, { color: body.color, paddingBottom: height / 40 }]}>
+                    {t('saveYourSeed:everySeedHasAChecksum')}
+                </Text>
+                <Text style={[styles.infoText, { color: body.color }]}>{t('saveYourSeed:checksumExplanation')}</Text>
+            </ModalView>
         );
     }
 }

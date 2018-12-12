@@ -3,10 +3,11 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { withNamespaces } from 'react-i18next';
 import PropTypes from 'prop-types';
+import { navigator } from 'libs/navigation';
 import { StyleSheet, View, Text, TouchableOpacity, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import Modal from 'react-native-modal';
 import { MAX_SEED_LENGTH, VALID_SEED_REGEX } from 'shared-modules/libs/iota/utils';
-import { setSetting, setAdditionalAccountInfo } from 'shared-modules/actions/wallet';
+import { setSetting } from 'shared-modules/actions/wallet';
+import { setAccountInfoDuringSetup } from 'shared-modules/actions/accounts';
 import { generateAlert } from 'shared-modules/actions/alerts';
 import { shouldPreventAction } from 'shared-modules/selectors/global';
 import { getAccountNamesFromState } from 'shared-modules/selectors/accounts';
@@ -14,13 +15,10 @@ import { toggleModalActivity, setDoNotMinimise } from 'shared-modules/actions/ui
 import timer from 'react-native-timer';
 import SeedStore from 'libs/SeedStore';
 import SeedVaultImport from 'ui/components/SeedVaultImportComponent';
-import PasswordValidation from 'ui/components/PasswordValidationModal';
 import CustomTextInput from 'ui/components/CustomTextInput';
-import QRScannerComponent from 'ui/components/QrScanner';
 import { width, height } from 'libs/dimensions';
 import { Icon } from 'ui/theme/icons';
-import { isAndroid, isIPhone11 } from 'libs/device';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
 const styles = StyleSheet.create({
@@ -47,7 +45,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize4,
+        fontSize: Styling.fontSize4,
         textAlign: 'center',
         backgroundColor: 'transparent',
     },
@@ -63,22 +61,15 @@ const styles = StyleSheet.create({
     },
     titleTextLeft: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         marginLeft: width / 20,
     },
     titleTextRight: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         marginRight: width / 20,
-    },
-    modal: {
-        height,
-        width,
-        justifyContent: 'center',
-        alignItems: 'center',
-        margin: 0,
     },
 });
 
@@ -93,18 +84,14 @@ class UseExistingSeed extends Component {
         shouldPreventAction: PropTypes.bool.isRequired,
         /** @ignore */
         theme: PropTypes.object.isRequired,
-        /** Navigation object */
-        navigator: PropTypes.object.isRequired,
         /** @ignore */
         t: PropTypes.func.isRequired,
         /** @ignore */
         generateAlert: PropTypes.func.isRequired,
         /** @ignore */
-        setAdditionalAccountInfo: PropTypes.func.isRequired,
+        setAccountInfoDuringSetup: PropTypes.func.isRequired,
         /** @ignore */
         setSetting: PropTypes.func.isRequired,
-        /** @ignore */
-        isModalActive: PropTypes.bool.isRequired,
         /** @ignore */
         toggleModalActivity: PropTypes.func.isRequired,
         /** @ignore */
@@ -133,7 +120,7 @@ class UseExistingSeed extends Component {
      * @method onQRPress
      */
     onQRPress() {
-        this.showModal('qr');
+        this.showModal('qrScanner');
     }
 
     /**
@@ -176,26 +163,25 @@ class UseExistingSeed extends Component {
         const seedStore = new SeedStore.keychain(password);
         await seedStore.addAccount(accountName, seed);
 
-        this.props.setAdditionalAccountInfo({
-            addingAdditionalAccount: true,
-            additionalAccountName: accountName,
-            additionalAccountType: 'keychain',
+        this.props.setAccountInfoDuringSetup({
+            name: accountName,
+            meta: { type: 'keychain' },
             seed,
             usedExistingSeed: true,
         });
 
-        this.props.navigator.push({
-            screen: 'loading',
-            navigatorStyle: {
-                navBarHidden: true,
-                navBarTransparent: true,
-                topBarElevationShadowEnabled: false,
-                screenBackgroundColor: body.bg,
-                drawUnderStatusBar: true,
-                statusBarColor: body.bg,
+        navigator.setStackRoot('loading', {
+            animations: {
+                setStackRoot: {
+                    enable: false,
+                },
             },
-            animated: false,
-            overrideBackPress: true,
+            layout: {
+                backgroundColor: body.bg,
+            },
+            statusBar: {
+                backgroundColor: body.bg,
+            },
         });
     }
 
@@ -256,45 +242,32 @@ class UseExistingSeed extends Component {
     }
 
     showModal = (modalContent) => {
-        this.setState({ modalContent });
-        this.props.toggleModalActivity();
+        const { theme } = this.props;
+        switch (modalContent) {
+            case 'qrScanner':
+                return this.props.toggleModalActivity(modalContent, {
+                    theme,
+                    onQRRead: (data) => this.onQRRead(data),
+                    hideModal: () => this.hideModal(),
+                    onMount: () => this.props.setDoNotMinimise(true),
+                    onUnmount: () => this.props.setDoNotMinimise(false),
+                    displayTopBar: true,
+                });
+            case 'passwordValidation':
+                return this.props.toggleModalActivity(modalContent, {
+                    theme,
+                    validatePassword: (password) => this.SeedVaultImport.validatePassword(password),
+                    hideModal: () => this.hideModal(),
+                    isDashboard: true,
+                });
+        }
     };
 
     hideModal = () => this.props.toggleModalActivity();
 
-    renderModalContent = (modalContent) => {
-        const { theme, theme: { body, primary } } = this.props;
-        let content = '';
-        switch (modalContent) {
-            case 'qr':
-                content = (
-                    <QRScannerComponent
-                        primary={primary}
-                        body={body}
-                        onQRRead={(data) => this.onQRRead(data)}
-                        hideModal={() => this.hideModal()}
-                        onMount={() => this.props.setDoNotMinimise(true)}
-                        onUnmount={() => this.props.setDoNotMinimise(false)}
-                    />
-                );
-                break;
-            case 'passwordValidation':
-                content = (
-                    <PasswordValidation
-                        validatePassword={(password) => this.SeedVaultImport.validatePassword(password)}
-                        hideModal={() => this.hideModal()}
-                        theme={theme}
-                    />
-                );
-                break;
-        }
-        return content;
-    };
-
     render() {
-        const { t, theme, isModalActive } = this.props;
-        const { modalContent, seed, accountName } = this.state;
-
+        const { t, theme } = this.props;
+        const { seed, accountName } = this.state;
         const textColor = { color: theme.body.color };
 
         return (
@@ -307,13 +280,29 @@ class UseExistingSeed extends Component {
                         </View>
                         <View style={{ flex: 0.4 }} />
                         <CustomTextInput
+                            onRef={(c) => {
+                                this.accountNameField = c;
+                            }}
+                            label={t('addAdditionalSeed:accountName')}
+                            onChangeText={(value) => this.setState({ accountName: value })}
+                            containerStyle={{ width: Styling.contentWidth }}
+                            autoCapitalize="words"
+                            maxLength={MAX_SEED_LENGTH}
+                            autoCorrect={false}
+                            enablesReturnKeyAutomatically
+                            returnKeyType="done"
+                            theme={theme}
+                            value={accountName}
+                        />
+                        <View style={{ flex: 0.45 }} />
+                        <CustomTextInput
                             label={t('global:seed')}
                             onChangeText={(text) => {
                                 if (text.match(VALID_SEED_REGEX) || text.length === 0) {
                                     this.setState({ seed: text.toUpperCase() });
                                 }
                             }}
-                            containerStyle={{ width: width / 1.15 }}
+                            containerStyle={{ width: Styling.contentWidth }}
                             autoCapitalize="characters"
                             maxLength={MAX_SEED_LENGTH}
                             value={seed}
@@ -331,33 +320,15 @@ class UseExistingSeed extends Component {
                             seed={seed}
                         />
                         <View style={{ flex: 0.45 }} />
-                        {!isIPhone11 && (
-                            <SeedVaultImport
-                                openPasswordValidationModal={() => this.showModal('passwordValidation')}
-                                onSeedImport={(seed) => {
-                                    this.setState({ seed });
-                                    this.hideModal();
-                                }}
-                                onRef={(ref) => {
-                                    this.SeedVaultImport = ref;
-                                }}
-                            />
-                        )}
-                        <View style={{ flex: 0.45 }} />
-                        <CustomTextInput
-                            onRef={(c) => {
-                                this.accountNameField = c;
+                        <SeedVaultImport
+                            openPasswordValidationModal={() => this.showModal('passwordValidation')}
+                            onSeedImport={(seed) => {
+                                this.setState({ seed });
+                                this.hideModal();
                             }}
-                            label={t('addAdditionalSeed:accountName')}
-                            onChangeText={(value) => this.setState({ accountName: value })}
-                            containerStyle={{ width: width / 1.15 }}
-                            autoCapitalize="words"
-                            maxLength={MAX_SEED_LENGTH}
-                            autoCorrect={false}
-                            enablesReturnKeyAutomatically
-                            returnKeyType="done"
-                            theme={theme}
-                            value={accountName}
+                            onRef={(ref) => {
+                                this.SeedVaultImport = ref;
+                            }}
                         />
                         <View style={{ flex: 1.2 }} />
                     </View>
@@ -383,23 +354,6 @@ class UseExistingSeed extends Component {
                             </View>
                         </TouchableOpacity>
                     </View>
-                    <Modal
-                        animationIn={isAndroid ? 'bounceInUp' : 'zoomIn'}
-                        animationOut={isAndroid ? 'bounceOut' : 'zoomOut'}
-                        animationInTiming={isAndroid ? 1000 : 300}
-                        animationOutTiming={200}
-                        backdropTransitionInTiming={isAndroid ? 500 : 300}
-                        backdropTransitionOutTiming={200}
-                        backdropColor={theme.body.bg}
-                        backdropOpacity={0.9}
-                        style={styles.modal}
-                        isVisible={isModalActive}
-                        onBackButtonPress={() => this.props.toggleModalActivity()}
-                        hideModalContentWhileAnimating
-                        useNativeDriver={isAndroid}
-                    >
-                        {this.renderModalContent(modalContent)}
-                    </Modal>
                 </View>
             </TouchableWithoutFeedback>
         );
@@ -411,13 +365,12 @@ const mapStateToProps = (state) => ({
     password: state.wallet.password,
     theme: state.settings.theme,
     shouldPreventAction: shouldPreventAction(state),
-    isModalActive: state.ui.isModalActive,
 });
 
 const mapDispatchToProps = {
     setSetting,
     generateAlert,
-    setAdditionalAccountInfo,
+    setAccountInfoDuringSetup,
     toggleModalActivity,
     setDoNotMinimise,
 };

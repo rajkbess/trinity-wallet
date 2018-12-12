@@ -22,6 +22,8 @@ import {
     getFailedBundleHashesForSelectedAccount,
     getNodesFromState,
     getSelectedNodeFromState,
+    getAccountInfoDuringSetup,
+    isSettingUpNewAccount,
 } from '../../selectors/accounts';
 import { defaultNode as DEFAULT_NODE } from '../../config';
 
@@ -155,8 +157,10 @@ describe('selectors: accounts', () => {
         });
 
         describe('when "accountInfo" prop is defined as a nested prop under "accounts" prop in argument', () => {
-            it('should return value for "accountNames" prop', () => {
-                expect(getAccountNamesFromState({ accounts: { accountInfo: { a: {}, b: [] } } })).to.eql(['a', 'b']);
+            it('should return sorted account names by indes', () => {
+                expect(
+                    getAccountNamesFromState({ accounts: { accountInfo: { a: { index: 1 }, b: { index: 0 } } } }),
+                ).to.eql(['b', 'a']);
             });
         });
     });
@@ -410,6 +414,14 @@ describe('selectors: accounts', () => {
         describe('when "setupInfo" prop is defined as a nested prop under "accounts" reducer', () => {
             it('should return value for "setupInfo" prop', () => {
                 expect(getSetupInfoFromAccounts({ accounts: { setupInfo: { foo: {} } } })).to.eql({ foo: {} });
+            });
+        });
+    });
+
+    describe('#getAccountInfoDuringSetup', () => {
+        it('should return value for "accountInfoDuringSetup" prop', () => {
+            expect(getAccountInfoDuringSetup({ accounts: { accountInfoDuringSetup: { foo: {} } } })).to.eql({
+                foo: {},
             });
         });
     });
@@ -716,6 +728,59 @@ describe('selectors: accounts', () => {
         describe('when "nodes" prop is undefined in settings reducer', () => {
             it('should return wallet default node', () => {
                 expect(getSelectedNodeFromState({ settings: {} })).to.equal(DEFAULT_NODE);
+            });
+        });
+    });
+
+    describe('#isSettingUpNewAccount', () => {
+        describe('when accountInfoDuringSetup.name is empty', () => {
+            describe('when accountInfoDuringSetup.meta is not empty', () => {
+                it('should return false', () => {
+                    expect(
+                        isSettingUpNewAccount({
+                            accounts: {
+                                accountInfoDuringSetup: {
+                                    name: '',
+                                    meta: { foo: {} },
+                                },
+                            },
+                        }),
+                    ).to.equal(false);
+                });
+            });
+        });
+
+        describe('when accountInfoDuringSetup.name is not empty', () => {
+            describe('when accountInfoDuringSetup.meta is empty', () => {
+                it('should return false', () => {
+                    expect(
+                        isSettingUpNewAccount({
+                            accounts: {
+                                accountInfoDuringSetup: {
+                                    name: 'foo',
+                                    meta: {},
+                                },
+                            },
+                        }),
+                    ).to.equal(false);
+                });
+            });
+        });
+
+        describe('when accountInfoDuringSetup.name is not empty', () => {
+            describe('when accountInfoDuringSetup.meta is not empty', () => {
+                it('should return true', () => {
+                    expect(
+                        isSettingUpNewAccount({
+                            accounts: {
+                                accountInfoDuringSetup: {
+                                    name: 'foo',
+                                    meta: { baz: {} },
+                                },
+                            },
+                        }),
+                    ).to.equal(true);
+                });
             });
         });
     });

@@ -18,8 +18,7 @@ const getProps = (overrides) =>
             t: () => '',
             onQRRead: noop,
             hideModal: noop,
-            body: { bg: '#ffffff' },
-            primary: {},
+            theme: { body: {}, primary: {} },
         },
         overrides,
     );
@@ -38,12 +37,8 @@ describe('Testing QrScanner component', () => {
             expect(QrScannerComponent.propTypes.hideModal).toEqual(PropTypes.func.isRequired);
         });
 
-        it('should require a body object as a prop', () => {
-            expect(QrScannerComponent.propTypes.body).toEqual(PropTypes.object.isRequired);
-        });
-
-        it('should require a primary object as a prop', () => {
-            expect(QrScannerComponent.propTypes.primary).toEqual(PropTypes.object.isRequired);
+        it('should require a theme object as a prop', () => {
+            expect(QrScannerComponent.propTypes.theme).toEqual(PropTypes.object.isRequired);
         });
     });
 
@@ -52,7 +47,7 @@ describe('Testing QrScanner component', () => {
             const props = getProps();
 
             const wrapper = shallow(<QrScannerComponent {...props} />);
-            expect(wrapper.name()).toEqual('View');
+            expect(wrapper.name()).toEqual('Connect(ModalViewComponent)');
         });
 
         it('should return a QrCodeScanner component', () => {
@@ -60,23 +55,6 @@ describe('Testing QrScanner component', () => {
 
             const wrapper = shallow(<QrScannerComponent {...props} />);
             expect(wrapper.find('QRCodeScanner').length).toEqual(1);
-        });
-
-        it('should call prop method hideModal when onPress prop of TouchableOpacity is triggered', () => {
-            const props = getProps({
-                hideModal: jest.fn(),
-            });
-
-            const wrapper = shallow(<QrScannerComponent {...props} />);
-
-            expect(props.hideModal).toHaveBeenCalledTimes(0);
-
-            wrapper
-                .find('TouchableOpacity')
-                .props()
-                .onPress();
-
-            expect(props.hideModal).toHaveBeenCalledTimes(1);
         });
 
         it('should call prop method onQRRead when onRead prop of QRCodeScanner is triggered', () => {

@@ -19,6 +19,7 @@
         "invalidResponse": "Lỗi nút mạng",
         "invalidResponseExplanation": "Nút mạng hiện lỗi. Hãy đổi nút mạng khác.",
         "invalidResponseFetchingAccount": "Nút mạng hiện lỗi khi lấy thông tin tài khoản của bạn. Hãy đổi nút mạng khác.",
+        "invalidResponseFetchingAccountDesktop": "The node returned an error while fetching your account information. If your problem persists, try changing node or disabling your system proxy in Trinity Settings.",
         "nodeOutOfSync": "Nút mạng không đồng bộ",
         "nodeOutOfSyncExplanation": "Nút mạng bạn đang chọn không được đồng bộ. Hãy đổi nút mạng khác hoặc thử lại sau.",
         "thisNodeOutOfSync": "Nút mạng này không được đồng bộ. Hãy đổi nút mạng khác hoặc thử lại sau.",
@@ -55,6 +56,8 @@
         "password": "Mật Khẩu",
         "unrecognisedPassword": "Không nhận dạng được mật khẩu",
         "unrecognisedPasswordExplanation": "Không xác nhận được mật khẩu. Xin vui lòng thử lại.",
+        "unrecognisedAccount": "Unrecognised account",
+        "unrecognisedAccountExplanation": "Account named {{accountName}} was not recognised. Consider resetting your wallet.",
         "emptyPasswordExplanation": "You must enter a password. Please try again.",
         "capsLockIsOn": "Caps Lock is on",
         "syncInProgress": "Đang đồng bộ hoá",
@@ -71,6 +74,8 @@
         "wallet": "Ví Điện Tử",
         "all": "All",
         "sent": "Đã Gửi",
+        "youReceived": "You received",
+        "youSent": "You sent",
         "received": "Đã Nhận",
         "sending": "Đang Gửi",
         "receiving": "Đang Nhận",
@@ -106,7 +111,6 @@
         "snapshotTransitionInProgressExplanation": "Vui lòng đợi đến khi quá trình chuyển đổi được hoàn tất.",
         "checkForUpdates": "Kiểm Tra Cập Nhật Mới",
         "account": "Tài Khoản",
-        "enterYourPassword": "Nhập mật khẩu của bạn",
         "changeNode": "Đổi Nút Mạng",
         "addCustomNode": "Thêm Nút Mạng Tuỳ Chỉnh",
         "nodeMustUseHTTPS": "Nút mạng không hợp lệ (không có HTTPS)",
@@ -126,7 +130,7 @@
         "spentAddressExplanation": "Cảnh báo: Còn dư quỹ trên một số địa chỉ đã dùng để gửi IOTA",
         "discordInformation": "Gửi IOTA đi nhiều lần từ cùng một địa chỉ là một hành động nguy hiểm. Vui lòng xem kênh #help trên Discord để tìm hiểu xem bạn nên làm gì.",
         "androidInsecureClipboardWarning": "Tính năng sao chép của Android không an toàn.",
-        "androidCopyPasteWarning": "Không bao giờ được sao chép/dán chuỗi mật mã của bạn khi sử dụng thiết bị Android.",
+        "androidCopyPasteWarning": "Never copy/paste a seed on an Android device.",
         "willNotCopyPasteSeed": "Tôi sẽ không chép/dán từ khoá",
         "mustBeStoredAppropriately": "Nó phải được lưu giữ thích đáng.",
         "deviceMayBecomeUnresponsive": "Thiết bị của bạn có thể ngưng phản hồi trong một thời gian.",
@@ -142,8 +146,18 @@
         "tryingAgainWithLocalPoW": "Trying again with local Proof of Work.",
         "tryingAgainWithDifferentNode": "Trying again with a different node.",
         "errorFetchingAccountInformation": "Error fetching account information.",
+        "errorSyncingAddresses": "Error syncing address information. Trying again with a different node.",
         "errorAccessingKeychain": "Keychain error",
-        "errorAccessingKeychainExplanation": "Cannot access keychain required for secure storage."
+        "errorAccessingKeychainExplanation": "Cannot access keychain required for secure storage.",
+        "mainWallet": "MAIN ACCOUNT",
+        "confirm": "Confirm",
+        "delete": "Delete",
+        "shouldUpdate": "A new update is available",
+        "shouldUpdateExplanation": "A new update has been released. It is recommended that you update to the latest version.",
+        "forceUpdate": "Update the app to continue",
+        "forceUpdateExplanation": "A critical update has been released. Please update the app now.",
+        "missingPermission": "File system permission required",
+        "missingPermissionExplanation": "Access to the file system is required in order to perform this function."
     },
     "addAdditionalSeed": {
         "seedInvalidChars": "Từ khoá chứa ký tự không hợp lệ",
@@ -197,24 +211,12 @@
         "passwordTooShortExplanation": "Mật khẩu của bạn phải có ít nhất {{minLength}} ký tự. Mật khẩu hiện tại có {{currentLength}} ký tự. Xin vui lòng thử lại.",
         "passwordMismatch": "Mật khẩu không trùng khớp",
         "passwordMismatchExplanation": "Mật khẩu vừa nhập không trùng khớp. Xin vui lòng thử lại.",
-        "anEncryptedCopy": "Một bản sao mã hoá của từ khoá sẽ được lưu trên máy của bạn. Bạn sẽ phải xài mật khẩu này để truy cập ví điện tử của mình.",
+        "anEncryptedCopy": "This is your main wallet password. You will use it to log in.",
         "retypePassword": "Nhập Lại Mật Khẩu"
     },
     "copyToClipboard": {
         "seedCleared": "Từ khoá đã xoá",
-        "seedClearedExplanation": "Từ khoá đã được xoá khỏi bộ nhớ tạm để bảo mật.",
-        "seedCopied": "Đã sao chép từ khoá từ bộ nhớ tạm",
-        "seedCopiedExplanation": "Từ khoá sẽ bị xoá sau khi bạn nhấn nút \"XONG\" hoặc sau khi 60 giây trôi qua.",
-        "copyToClipboard": "Chép Từ Khóa",
-        "shareSeed": "Chia sẻ chuỗi mật mã của bạn tới mọt chương trình quản lý mật khẩu an toàn",
-        "storeEncrypted": "Lưu trữ chuỗi mật mã của bạn sau khi được mã hóa trong một trình quản lý mật khẩu.",
-        "doNotOpen": "Không mở bất kỳ ứng dụng nào khác trong quá trình này.",
-        "tapConfirm": "Vui lòng bấm vào hộp đánh dấu ở dưới để xác nhận.",
-        "passwordManagerCheckbox": "Tôi sẽ lưu từ khoá trong chương trình quản lý mật khẩu",
-        "copy": "CHÉP",
-        "noPasswordManagers": "Không tìm thấy trình quản lý mật khẩu nào phù hợp",
-        "noPasswordManagersExplanation": "Không tìm thấy trình quản lý mật khẩu nào phù hợp trên thiết bị. Vui lòng cài đặt Keepass2Android.",
-        "followTutorialToSecurelyShareSeed": "Nếu bạn muốn lưu trữ chuỗi mật mã của bạn trrong một trình quản lý mật khẩu, vui lòng làm theo các bước trong hướng dẫn sau đây"
+        "seedClearedExplanation": "Từ khoá đã được xoá khỏi bộ nhớ tạm để bảo mật."
     },
     "enterSeed": {
         "invalidCharacters": "Từ khoá chứa ký tự không hợp lệ",
@@ -243,7 +245,8 @@
         "login": "Đăng Nhập",
         "setNode": "Chọn Nút Mạng",
         "whyBiometricDisabled": "Why is biometric authentication disabled?",
-        "whyBiometricDisabledExplanation": "Biometric login is disabled on first app load for your security. When using Trinity, you will be logged out for inactivity. You can then log back in with biometric authentication."
+        "whyBiometricDisabledExplanationPart1": "Biometric authentication is disabled on first app load for your security.",
+        "whyBiometricDisabledExplanationPart2": "When using Trinity you will be logged out for inactivity. You can then log back in with biometric authentication."
     },
     "loading": {
         "loadingFirstTime": "Đang tải từ khoá lần đầu tiên.",
@@ -272,12 +275,12 @@
     "paperWallet": {
         "neverShare": "Đừng bao giờ chia sẻ từ khoá với bất cứ ai.",
         "iotaLogo": "IOTA logo",
-        "print": "IN",
+        "print": "Print",
         "paperConvenience": "In chuỗi mật mã của bạn ra giấy là một cách thuận tiện để lưu trữ nó.",
         "publicInsecure": "Nhưng in bằng mạng Wifi công cộng hoặc bằng máy in công cộng là không an toàn.",
-        "tapCheckboxes": "Vui lòng bấm vào những hộp đánh dấu ở dưới để xác nhận.",
-        "wifiCheckbox": "Tôi sẽ không in trên wifi công cộng",
-        "printerCheckbox": "Tôi sẽ không in trên máy in công cộng"
+        "pleaseCheck": "Please check and confirm before you print",
+        "wifiConfirmation": "I am not on on public wifi",
+        "printerConfirmation": "I am not printing on a public printer"
     },
     "receive": {
         "yourAddress": "Your address",
@@ -286,12 +289,13 @@
         "copyAddress": "Chép địa chỉ",
         "addressCopied": "Đã sao chép địa chỉ",
         "addressCopiedExplanation": "Địa chỉ đã được sao chép vào bộ nhớ tạm thời.",
-        "generateNewAddress": "Địa Chỉ Mới",
+        "generateNewAddress": "Generate address",
         "noAddresses": "KHÔNG CÓ ĐỊA CHỈ",
         "spent": "Đã Gửi",
-        "missingPermission": "File system permission required",
-        "missingPermissionExplanation": "Access to the file system is required in order to share QR codes.",
-        "tag": "Tag"
+        "tag": "Tag",
+        "generateAnAddress": "Generate address",
+        "generateAnAddressTitle": "Generate an address",
+        "generateAnAddressExplanation": "Please generate an address before using this function."
     },
     "saveYourSeed": {
         "saveYourSeed": "Sao lưu chuỗi mật mã của bạn",
@@ -305,7 +309,8 @@
         "letsWriteDownYourSeed": "Let's write down your seed",
         "youCanHighlightCharacters": "Bạn có thể đánh dấu 9 ký tự trong một lần",
         "printBlankWallet": "In một ví trống",
-        "whatIsChecksum": "Every seed has a corresponding 3-character checksum",
+        "whatIsAChecksum": "What is a checksum?",
+        "everySeedHasAChecksum": "Every seed has a corresponding 3-character checksum.",
         "iHavesavedMySeed": "Tôi đã lưu từ khóa",
         "checksumExplanation": "Khi bạn cho từ khoá vào ví, bạn nên chắc chắn rằng mã kiểm tra của ví trùng khớp với mã bạn đã ghi xuống.",
         "mustSaveYourSeed": "<0><0>Bạn phải lưu từ khoá với </0><1>ít nhất một</1><2>trong những sự lựa chọn dưới đây.</2></0>"
@@ -346,7 +351,8 @@
         "totalTime": "Total time",
         "addressPasteDetected": "Address paste detected",
         "addressPasteExplanation": "It looks like you have pasted an address. Make sure that the address matches the one you want to send to.",
-        "invalid": "INVALID"
+        "invalid": "INVALID",
+        "swipeToSend": "Swipe to send"
     },
     "setSeedName": {
         "letsAddName": "Let's add a name",
@@ -357,7 +363,9 @@
         "advanced": "Advanced",
         "standard": "Standard",
         "advancedModeExplanation": "Advanced mode will display more detailed technical information.",
-        "modesExplanation": "Only enable Advanced mode if you are experienced using IOTA. You may find it confusing otherwise."
+        "modesExplanation": "Only enable Advanced mode if you are experienced using IOTA. You may find it confusing otherwise.",
+        "modeUpdated": "Mode updated",
+        "modeUpdatedExplanation": "You have changed to {{mode}} mode"
     },
     "settings": {
         "transferSending": "Đang chuyển khoản",
@@ -415,7 +423,6 @@
         "reset": "Reset"
     },
     "walletSetup": {
-        "creatingSeed": "Đang tạo từ khoá",
         "okay": "Ok. Hãy thiết lập ví điện tử của bạn!",
         "doYouNeedASeed": "Bạn có cần tạo từ khoá mới không?",
         "seedExplanation": "Your IOTA seed is the master key to your funds. It is 81 characters long, using only letters A-Z or the number 9.",
@@ -445,7 +452,9 @@
         "receive": "Nhận",
         "empty": "Empty",
         "retrying": "Retrying",
-        "yesterday": "Yesterday"
+        "yesterday": "Yesterday",
+        "promotingAnotherBundle": "Promoting another bundle",
+        "pleaseWait": "Please wait, Trinity is promoting another bundle."
     },
     "accountManagement": {
         "viewSeed": "Xem từ khoá",
@@ -503,18 +512,21 @@
         "currency": "Tiền Tệ"
     },
     "logoutConfirmationModal": {
-        "logoutConfirmation": "Bạn có muốn đăng xuất không?"
+        "logoutConfirmation": "Bạn có muốn đăng xuất không?",
+        "aboutToLogOut": "You are about to log out",
+        "areYouSure": "Are you sure?"
     },
     "qrScanner": {
         "scan": "Quét mã QR"
     },
     "unitInfoModal": {
-        "unitSystem": "HỆ THỐNG ĐƠN VỊ",
+        "unitSystem": "Unit System",
         "trillion": "Nghìn Tỷ",
         "billion": "Tỷ",
         "million": "Triệu",
         "thousand": "Nghìn",
-        "one": "Một"
+        "one": "Một",
+        "unitInfoExplanation": "IOTAs are typically acquired in multiples of one million, but can be transferred as a single IOTA."
     },
     "usedAddressModal": {
         "cantSpendFullBalanceQuestion": "Why can't I spend my full balance?",
@@ -522,9 +534,9 @@
         "discordInformation": "Please head to the #help channel on Discord to find out what you can do."
     },
     "deleteAccount": {
-        "areYouSure": "<0></0><1>Are you sure you want to delete</1><2></2><3>{{accountName}}?</3>",
+        "areYouSure": "Are you sure you want to delete your account?",
         "yourSeedWillBeRemoved": "Từ khóa và lịch sử của các giao dịch sẽ bị xóa.",
-        "thisAction": "Thao tác này không thể đảo ngược.",
+        "thisAction": "This action cannot be undone",
         "enterPassword": "Nhập mật khẩu để xóa tài khoản này."
     },
     "manualSync": {
@@ -536,19 +548,22 @@
         "syncingYourAccount": "Đang đồng bộ tài khoản."
     },
     "useExistingSeed": {
-        "title": "Nhập từ khóa và tên tài khoản.",
+        "title": "Enter an account name and seed",
         "incorrectFormat": "Incorrect seed format",
         "validSeedExplanation": "Valid seeds should be 81 characters and contain only A-Z or 9."
     },
     "viewSeed": {
         "enterPassword": "Nhập mật khẩu để xem từ khóa.",
         "viewSeed": "Xem Từ Khoá",
-        "hideSeed": "Ẩn từ khóa"
+        "hideSeed": "Ẩn từ khóa",
+        "notAvailable": "Seed export is not available for {{accountType}} account type",
+        "accountIndex": "Your Ledger account index",
+        "accountPage": "Your Ledger account page"
     },
     "saveSeedConfirmation": {
         "didSaveSeed": "Did you back up your seed?",
-        "alreadyHave": "Tôi đã lưu từ khóa",
-        "reenterSeed": "At the next step you will be asked to re-enter your seed.",
+        "iHaveBackedUp": "I have safely backed up my seed",
+        "reenterSeed": "At the next step you need to re-enter your seed.",
         "reenterSeedWarning": "If you have not backed up your seed and your device fails, you will lose all of your IOTA.",
         "pleaseConfirm": "Please confirm you have securely stored your seed."
     },
@@ -568,15 +583,19 @@
         "status": "Tình Trạng",
         "fingerprintUnavailable": "Biometric authentication unavailable",
         "fingerprintUnavailableExplanation": "Your device does not support biometric authentication or it has not been configured in the device settings.",
-        "buttonInstructionsDisable": "Nhấn vào nút dưới đây để vô hiệu hóa xác thực vân tay.",
+        "buttonInstructionsDisable": "Press the button below to disable fingerprint authentication",
         "buttonInstructionsEnable": "Nhấn vào nút dưới đây để kích hoạt xác thực vân tay.",
-        "buttonInstructionsDisableIPhoneX": "Press the button below to disable Face ID.",
-        "buttonInstructionsEnableIPhoneX": "Press the button below to enable Face ID.",
+        "buttonInstructionsDisableIPhoneX": "Press the button below to disable Face ID",
+        "buttonInstructionsEnableIPhoneX": "Press the button below to enable Face ID",
         "instructionsLogin": "Chạm đầu đọc vân tay để đăng nhập"
     },
     "transferConfirmation": {
         "youAreAbout": "Bạn chuẩn bị gửi {{contents}} đến địa chỉ",
-        "aMessage": "tin nhắn"
+        "aMessage": "tin nhắn",
+        "fromAccount": "From {{selectedAccountName}}",
+        "toAddress": "To address",
+        "sendingAMessage": "Sending a message",
+        "sendingAnEmptyMessage": "Sending an empty message"
     },
     "twoFA": {
         "wrongCode": "Sai mã 2FA",
@@ -597,23 +616,29 @@
     },
     "seedVault": {
         "exportSeedVault": "Export SeedVault",
-        "seedVaultExplanation": "A SeedVault is an encrypted file for storing your seed securely. The seed is encrypted behind a password and cannot be accessed without that password.",
+        "seedVaultExplanation": "A SeedVault is an encrypted file for backing up your seed. The seed is encrypted with a SeedVault Key and cannot be accessed without that key.",
         "seedVaultWarning": "Make sure you back up the file in multiple locations (e.g. hard drive, cloud, USB). If you lose this file and have not stored your seed elsewhere, you will lose your IOTA.",
         "exportFail": "SeedVault export failed",
         "exportFailExplanation": "There was an problem exporting the SeedVault. Please ensure you have the appropriate permissions and enough free space.",
         "exportSuccess": "SeedVault exported",
         "exportSuccessExplanation": "Your encrypted seed file was exported successfully.",
+        "unrecognisedKey": "Unrecognised SeedVault Key",
+        "unrecognisedKeyExplanation": "The key was not recognised. Please try again.",
+        "emptyKey": "No SeedVault Key entered",
+        "emptyKeyExplanation": "You must enter a key. Please try again.",
         "importSuccess": "Seed imported",
         "importSuccessExplanation": "Your seed was imported successfully.",
         "saveToDownloadFolder": "Save to Download Folder",
         "importSeedVault": "Import SeedVault",
-        "dropSeedVaultHere": "Drop SeedVault here <1></1> or click to browse",
-        "enterPasswordExplanation": "Enter your password to open the SeedVault",
+        "dropInstructions": "Drop SeedVault or text here <1></1> or click to browse",
+        "dropActive": "Drop SeedVault or text here",
+        "enterKeyExplanation": "Enter your key to open the SeedVault",
         "noSeedFound": "SeedVault does not contain a valid seed",
         "noSeedFoundExplanation": "The SeedVault is either empty or contains a seed in an invalid format.",
         "seedFileError": "Failed to open SeedVault",
         "seedFileErrorExplanation": "There was a problem opening the SeedVault. If you selected the correct file then it may be corrupted.",
-        "seedVaultPasswordExplanation": "First we need to secure your SeedVault. Please choose a password to encrypt the file. You will need this password to restore your seed from the SeedVault back up. Feel free to use the same password you use for Trinity."
+        "seedVaultKeyExplanation": "First we need to secure your SeedVault. Please choose a key to encrypt the file. You will need this key to restore your seed from the SeedVault back up.",
+        "retypeKey": "Retype key"
     },
     "chart": {
         "mcap": "MCAP",
@@ -647,7 +672,8 @@
         "preparingTransfers": "Chuẩn bị chuyển khoản",
         "gettingTransactionsToApprove": "Getting transactions to approve",
         "proofOfWork": "Đang hoàn thành proof of work",
-        "broadcasting": "Đang phát sóng"
+        "broadcasting": "Đang phát sóng",
+        "transferComplete": "Transfer complete"
     },
     "snapshotTransition": {
         "cannotCompleteTransition": "Cannot complete snapshot transition",
@@ -661,7 +687,8 @@
         "transition": "Transition",
         "transitioning": "Transitioning for the snapshot.",
         "generatingAndDetecting": "Tạo địa chỉ mới và tìm ra số tiền trong tài khoản.",
-        "attaching": "Kết nối địa chỉ vào mạng Tangle."
+        "attaching": "Kết nối địa chỉ vào mạng Tangle.",
+        "attachProgress": "Attaching address {{currentAddress}} of {{totalAddresses}}"
     },
     "deepLink": {
         "autofill": "Autofill success",
@@ -674,7 +701,9 @@
         "newVersionAvailable": "Đã có phiên bản mới",
         "newVersionAvailableExplanation": "A new <strong>Trinity</strong> <strong>{{version}}</strong> version is available. Carefully read the release notes and verify the download source before updating:",
         "installUpdate": "Install update and restart",
-        "installUpdateExplanation": "Download complete, Trinity will now restart to install the update."
+        "installUpdateExplanation": "Download complete, Trinity will now restart to install the update.",
+        "downloadingUpdate": "Downloading update",
+        "downloadProgress": "{{transferred}} of {{total}} downloaded"
     },
     "notificationLog": {
         "errorLog": "Error log"
@@ -694,6 +723,10 @@
         "notLoggedIn": "You are not logged in",
         "setupIncomplete": "Wallet setup incomplete",
         "completeSetup": "Complete setup"
+    },
+    "proxy": {
+        "proxy": "Use system proxy",
+        "proxyExplanation": "Detect and use system wide network proxy settings. Close and reopen the wallet after changing this setting."
     },
     "notifications": {
         "notifications": "Notifications",
@@ -717,5 +750,37 @@
         "proceed": "Proceed to Recovery",
         "sweepConfirmation": "You are about to sweep {{amount}} to the address {{address}}. Account: {{accountName}}, address index: {{index}}",
         "sweepConfirmationTitle": "Sweep confirmation"
+    },
+    "ledger": {
+        "ready": "Ledger device connected and ready",
+        "notReady": "If you wish to use a Ledger device, connect and unlock it now",
+        "indexInUse": "Index already in use for account {{account}}",
+        "indexInUseExplanation": "Your chosen index is already in use on one of your accounts. Please choose another index number.",
+        "proceedWithLedger": "Proceed with Ledger setup",
+        "accountIndex": "Account index",
+        "accountPage": "Account page",
+        "chooseAccountIndex": "Choose your Ledger account index",
+        "accountIndexExplanation": "Your Ledger can store multiple seeds. Each seed is identified by a unique index number. An unused index has been pre-selected, but feel free to choose your own. Make sure you note down your chosen index number.",
+        "accountPageExplanation": "Some third party wallets require pages.",
+        "connectionError": "Cannot connect to Ledger",
+        "connectionErrorExplanation": "Check that your Ledger is connected and unlocked.",
+        "connectionTitle": "Connect your Ledger",
+        "connectionExplanation": "A Ledger device must be connected to perform this function.",
+        "transactionTitle": "Scroll through and approve the transaction on your Ledger",
+        "transactionExplanation": "Use your Ledger device to approve the outgoing transaction.",
+        "applicationTitle": "Open Ledger IOTA app",
+        "applicationExplanation": "Go to your Ledger and open the IOTA app to continue using Trinity.",
+        "cannotSendZeroValueTitle": "Cannot send zero value transfer",
+        "cannotSendZeroValueExplanation": "Cannot send zero value transfers with a Ledger device.",
+        "ledgerDisconnectedTitle": "Ledger device disconnected",
+        "ledgerDisconnectedExplanation": "The Ledger device was disconnected. Please reconnect and try again.",
+        "ledgerDeniedTitle": "Transaction denied",
+        "ledgerDeniedExplanation": "The transaction was denied on the Ledger device.",
+        "ledgerIncorrectIndex": "Ledger device mismatch",
+        "ledgerIncorrectIndexExplanation": "The connected Ledger device does not match the one linked to this account, or the recovery phrase has been changed.",
+        "checkAddress": "Check the receive address",
+        "checkAddressExplanation": "Check that the address matches the one displayed on your Ledger device.",
+        "applicationNotInitialised": "Warning unconfirmed",
+        "applicationNotInitialisedExplanation": "Reopen the IOTA app on your Ledger device, accept the informational warning and try again."
     }
 }

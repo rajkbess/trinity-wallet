@@ -1,30 +1,35 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Animated, StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 import { Icon } from 'ui/theme/icons';
 import { width, height } from 'libs/dimensions';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
+import { isIPhoneX } from 'libs/device';
 
 const styles = StyleSheet.create({
-    button: {
-        flex: 1,
+    container: {
+        height: width / 8.5,
         width: width / 5,
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    button: {
+        width: width / 5,
+        height: parseInt(width / 5 + height / (isIPhoneX ? 120 : 160)),
         justifyContent: 'center',
         alignItems: 'center',
         borderTopColor: 'transparent',
-        borderTopWidth: parseInt(height / 160),
+        borderTopWidth: parseInt(height / (isIPhoneX ? 120 : 160)),
     },
     iconTitle: {
         fontWeight: 'bold',
         textAlign: 'center',
-        paddingTop: height / 80,
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize1,
         backgroundColor: 'transparent',
     },
 });
 
-class Tab extends PureComponent {
+class Tab extends Component {
     static propTypes = {
         /** Tab icon name */
         icon: PropTypes.string.isRequired,
@@ -36,6 +41,8 @@ class Tab extends PureComponent {
         isActive: PropTypes.bool.isRequired,
         /** Press event callback function */
         onPress: PropTypes.func,
+        /** Tab name */
+        name: PropTypes.string.isRequired,
     };
 
     static defaultProps = {
@@ -43,22 +50,66 @@ class Tab extends PureComponent {
         isActive: false,
     };
 
+    constructor(props) {
+        super(props);
+        this.iconSize = new Animated.Value(props.isActive ? width / 14 : width / 18);
+        this.fontSize = new Animated.Value(props.isActive ? width / 42 : Styling.fontSize1);
+    }
+
+    componentWillReceiveProps(newProps) {
+        if (!this.props.isActive && newProps.isActive) {
+            Animated.parallel([
+                Animated.timing(this.iconSize, {
+                    toValue: width / 14,
+                    duration: 150,
+                }),
+                Animated.timing(this.fontSize, {
+                    toValue: width / 42,
+                    duration: 150,
+                }),
+            ]).start();
+        }
+        if (this.props.isActive && !newProps.isActive) {
+            Animated.parallel([
+                Animated.timing(this.iconSize, {
+                    toValue: width / 18,
+                    duration: 150,
+                }),
+                Animated.timing(this.fontSize, {
+                    toValue: Styling.fontSize1,
+                    duration: 150,
+                }),
+            ]).start();
+        }
+    }
+
+    getPosition() {
+        const { name } = this.props;
+        const names = ['balance', 'send', 'receive', 'history', 'settings'];
+        return names.indexOf(name) * width / 5;
+    }
+
     render() {
-        const { onPress, icon, text, theme: { bar, primary }, isActive } = this.props;
+        const { onPress, icon, text, theme: { bar } } = this.props;
+        const AnimatedIcon = Animated.createAnimatedComponent(Icon);
+        AnimatedIcon.displayName = 'AnimatedIcon';
 
         return (
             <TouchableWithoutFeedback onPress={onPress}>
-                <View
-                    style={
-                        isActive
-                            ? [styles.button, { backgroundColor: bar.hover, borderTopColor: primary.color }]
-                            : styles.button
-                    }
-                >
-                    <Icon name={icon} size={width / 18} color={bar.color} />
-                    <Text numberOfLines={1} style={[styles.iconTitle, { color: bar.color }]}>
-                        {text}
-                    </Text>
+                <View style={[{ position: 'absolute', left: this.getPosition() }, styles.button]}>
+                    <View style={styles.container}>
+                        <AnimatedIcon
+                            name={icon}
+                            color={bar.color}
+                            style={[{ backgroundColor: 'transparent', fontSize: this.iconSize }]}
+                        />
+                        <Animated.Text
+                            numberOfLines={1}
+                            style={[styles.iconTitle, { color: bar.color, fontSize: this.fontSize }]}
+                        >
+                            {text}
+                        </Animated.Text>
+                    </View>
                 </View>
             </TouchableWithoutFeedback>
         );

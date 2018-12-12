@@ -2,8 +2,7 @@ import isEqual from 'lodash/isEqual';
 import React, { Component } from 'react';
 import { withNamespaces } from 'react-i18next';
 import PropTypes from 'prop-types';
-import Modal from 'react-native-modal';
-import { Linking, StyleSheet, View, KeyboardAvoidingView, Animated, Keyboard } from 'react-native';
+import { Linking, StyleSheet, View, KeyboardAvoidingView, Animated } from 'react-native';
 import {
     shouldTransitionForSnapshot,
     hasDisplayedSnapshotTransitionGuide,
@@ -18,19 +17,15 @@ import { generateAlert } from 'shared-modules/actions/alerts';
 import { parseAddress } from 'shared-modules/libs/iota/utils';
 import timer from 'react-native-timer';
 import { hash } from 'libs/keychain';
-import DynamicStatusBar from 'ui/components/DynamicStatusBar';
 import UserInactivity from 'ui/components/UserInactivity';
-import StatefulDropdownAlert from 'ui/components/StatefulDropdownAlert';
 import TopBar from 'ui/components/TopBar';
 import WithUserActivity from 'ui/components/UserActivity';
-import WithBackPress from 'ui/components/BackPress';
-import SnapshotTransitionModalContent from 'ui/components/SnapshotTransitionModalContent';
 import PollComponent from 'ui/components/Poll';
 import Tabs from 'ui/components/Tabs';
 import Tab from 'ui/components/Tab';
 import TabContent from 'ui/components/TabContent';
 import EnterPassword from 'ui/components/EnterPassword';
-import { width, height } from 'libs/dimensions';
+import { Styling } from 'ui/theme/general';
 import { isAndroid, isIPhoneX } from 'libs/device';
 
 const styles = StyleSheet.create({
@@ -46,21 +41,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    modal: {
-        height,
-        width,
-        justifyContent: 'center',
-        alignItems: 'center',
-        margin: 0,
-    },
 });
 
 class Home extends Component {
     static propTypes = {
         /** @ignore */
         t: PropTypes.func.isRequired,
-        /** Navigation object */
-        navigator: PropTypes.object.isRequired,
         /** @ignore */
         changeHomeScreenRoute: PropTypes.func.isRequired,
         /** @ignore */
@@ -107,6 +93,10 @@ class Home extends Component {
         markTaskAsDone: PropTypes.func.isRequired,
         /** Currently selected account name */
         selectedAccountName: PropTypes.string.isRequired,
+        /** @ignore */
+        currentRoute: PropTypes.string.isRequired,
+        /** @ignore */
+        isKeyboardActive: PropTypes.bool.isRequired,
     };
 
     constructor(props) {
@@ -114,29 +104,54 @@ class Home extends Component {
         this.onLoginPress = this.onLoginPress.bind(this);
         this.setDeepUrl = this.setDeepUrl.bind(this);
         this.viewFlex = new Animated.Value(0.7);
-        this.topBarHeight = isAndroid ? null : new Animated.Value(height / 8.8);
-
-        this.state = {
-            isKeyboardActive: false,
-            showModal: false,
-        };
+        this.topBarHeight = new Animated.Value(Styling.topbarHeight);
     }
 
     componentWillMount() {
-        if (!isAndroid) {
-            this.keyboardWillShowSub = Keyboard.addListener('keyboardWillShow', this.keyboardWillShow);
-            this.keyboardWillHideSub = Keyboard.addListener('keyboardWillHide', this.keyboardWillHide);
-        }
-        if (isAndroid) {
-            this.keyboardWillShowSub = Keyboard.addListener('keyboardDidShow', this.keyboardDidShow);
-            this.keyboardWillHideSub = Keyboard.addListener('keyboardDidHide', this.keyboardDidHide);
-        }
         this.deepLinkSub = Linking.addEventListener('url', this.setDeepUrl);
     }
 
     componentDidMount() {
         this.userInactivity.setActiveFromComponent();
         this.displayUpdates();
+    }
+
+    componentWillReceiveProps(newProps) {
+        if (!this.props.isKeyboardActive && newProps.isKeyboardActive && !this.props.isModalActive) {
+            this.handleCloseTopBar();
+            if (isAndroid) {
+                this.topBarHeight = 20;
+                this.viewFlex = 0.2;
+                return;
+            }
+            Animated.parallel([
+                Animated.timing(this.viewFlex, {
+                    duration: 250,
+                    toValue: 0.2,
+                }),
+                Animated.timing(this.topBarHeight, {
+                    duration: 250,
+                    toValue: isIPhoneX ? 0 : 20,
+                }),
+            ]).start();
+        }
+        if (this.props.isKeyboardActive && !newProps.isKeyboardActive) {
+            if (isAndroid) {
+                this.topBarHeight = Styling.topbarHeight;
+                this.viewFlex = 0.7;
+                return;
+            }
+            Animated.parallel([
+                Animated.timing(this.viewFlex, {
+                    duration: 250,
+                    toValue: 0.7,
+                }),
+                Animated.timing(this.topBarHeight, {
+                    duration: 250,
+                    toValue: Styling.topbarHeight,
+                }),
+            ]).start();
+        }
     }
 
     shouldComponentUpdate(newProps) {
@@ -159,8 +174,6 @@ class Home extends Component {
 
     componentWillUnmount() {
         const { isModalActive } = this.props;
-        this.keyboardWillShowSub.remove();
-        this.keyboardWillHideSub.remove();
         Linking.removeEventListener('url');
         if (isModalActive) {
             this.props.toggleModalActivity();
@@ -175,7 +188,6 @@ class Home extends Component {
      */
     async onLoginPress(password) {
         const { t, storedPasswordHash } = this.props;
-
         if (!password) {
             return this.props.generateAlert('error', t('login:emptyPassword'), t('login:emptyPasswordExplanation'));
         }
@@ -196,16 +208,20 @@ class Home extends Component {
      * Changes home screen child route
      * @param {string} name
      */
-    onTabSwitch(name) {
+    onTabSwitch(nextRoute) {
         const { isSyncing, isTransitioning, isCheckingCustomNode } = this.props;
-
         this.userInactivity.setActiveFromComponent();
 
         if (isTransitioning) {
             return;
         }
-
-        this.props.changeHomeScreenRoute(name);
+        // Set tab animation in type according to relative position of next active tab
+        const routes = ['balance', 'send', 'receive', 'history', 'settings'];
+        this.tabAnimationInType =
+            routes.indexOf(nextRoute) < routes.indexOf(this.props.currentRoute)
+                ? ['slideInLeftSmall', 'fadeIn']
+                : ['slideInRightSmall', 'fadeIn'];
+        this.props.changeHomeScreenRoute(nextRoute);
 
         if (!isSyncing && !isCheckingCustomNode) {
             this.resetSettings();
@@ -255,77 +271,31 @@ class Home extends Component {
         }
     };
 
-    keyboardWillShow = (event) => {
-        const { inactive, minimised } = this.props;
-        if (inactive || minimised) {
-            return;
-        }
-        this.handleCloseTopBar();
-        this.setState({ isKeyboardActive: true });
-        Animated.timing(this.viewFlex, {
-            duration: event.duration,
-            toValue: 0.2,
-        }).start();
-        Animated.timing(this.topBarHeight, {
-            duration: event.duration,
-            toValue: isIPhoneX ? 0 : 20,
-        }).start();
-    };
-
-    keyboardWillHide = (event) => {
-        timer.setTimeout('iOSKeyboardTimeout', () => this.setState({ isKeyboardActive: false }), event.duration);
-        Animated.timing(this.viewFlex, {
-            duration: event.duration,
-            toValue: 0.7,
-        }).start();
-        Animated.timing(this.topBarHeight, {
-            duration: event.duration,
-            toValue: height / 8.8,
-        }).start();
-    };
-
-    keyboardDidShow = () => {
-        const { inactive, minimised } = this.props;
-        if (inactive || minimised) {
-            return;
-        }
-        this.handleCloseTopBar();
-        this.topBarHeight = 20;
-        this.viewFlex = 0.2;
-        this.setState({ isKeyboardActive: true });
-    };
-
-    keyboardDidHide = () => {
-        this.topBarHeight = height / 8.8;
-        this.viewFlex = 0.7;
-        this.setState({ isKeyboardActive: false });
-    };
-
     /**
      * Mark the task of displaying snapshot transition modal as done
      */
     completeTransitionTask() {
-        // Just mark this task as done
-        // Since most likely the account needs
-        // no transition
         this.props.markTaskAsDone({
             accountName: this.props.selectedAccountName,
             task: 'hasDisplayedTransitionGuide',
         });
+        if (this.props.isModalActive) {
+            this.props.toggleModalActivity();
+        }
     }
 
     /**
      * Displays snapshot transition guide modal
      */
     displayUpdates() {
-        const { hasDisplayedSnapshotTransitionGuide, shouldTransitionForSnapshot, isModalActive } = this.props;
-
+        const { hasDisplayedSnapshotTransitionGuide, shouldTransitionForSnapshot } = this.props;
         if (!hasDisplayedSnapshotTransitionGuide) {
             if (shouldTransitionForSnapshot) {
-                if (isModalActive) {
-                    this.props.toggleModalActivity();
-                }
-                this.setState({ showModal: true });
+                this.props.toggleModalActivity('snapshotTransitionInfo', {
+                    theme: this.props.theme,
+                    t: this.props.t,
+                    completeTransitionTask: () => this.completeTransitionTask(),
+                });
             } else {
                 this.completeTransitionTask();
             }
@@ -333,17 +303,7 @@ class Home extends Component {
     }
 
     render() {
-        const {
-            t,
-            navigator,
-            inactive,
-            minimised,
-            isFingerprintEnabled,
-            isModalActive,
-            theme: { bar, body, negative, positive },
-            theme,
-        } = this.props;
-        const { isKeyboardActive } = this.state;
+        const { t, inactive, minimised, isFingerprintEnabled, theme: { body, negative, positive }, theme } = this.props;
         const textColor = { color: body.color };
 
         return (
@@ -356,7 +316,6 @@ class Home extends Component {
                 onInactivity={this.handleInactivity}
             >
                 <View style={{ flex: 1, backgroundColor: body.bg }}>
-                    <DynamicStatusBar backgroundColor={inactive ? body.bg : bar.alt} isModalActive={isModalActive} />
                     {(!inactive && (
                         <View style={{ flex: 1 }}>
                             {(!minimised && (
@@ -364,10 +323,8 @@ class Home extends Component {
                                     <Animated.View useNativeDriver style={{ flex: this.viewFlex }} />
                                     <View style={{ flex: 4.72 }}>
                                         <TabContent
-                                            navigator={navigator}
                                             onTabSwitch={(name) => this.onTabSwitch(name)}
                                             handleCloseTopBar={() => this.handleCloseTopBar()}
-                                            isKeyboardActive={isKeyboardActive}
                                         />
                                     </View>
                                 </KeyboardAvoidingView>
@@ -401,11 +358,7 @@ class Home extends Component {
                                     />
                                 </Tabs>
                             </View>
-                            <TopBar
-                                minimised={minimised}
-                                isKeyboardActive={isKeyboardActive}
-                                topBarHeight={this.topBarHeight}
-                            />
+                            <TopBar minimised={minimised} topBarHeight={this.topBarHeight} />
                         </View>
                     )) || (
                         <View style={[styles.inactivityLogoutContainer, { backgroundColor: body.bg }]}>
@@ -425,31 +378,7 @@ class Home extends Component {
                         </View>
                     )}
                     <PollComponent />
-                    {!isModalActive && <StatefulDropdownAlert backgroundColor={bar.bg} />}
                 </View>
-                <Modal
-                    backdropTransitionInTiming={isAndroid ? 500 : 300}
-                    backdropTransitionOutTiming={200}
-                    backdropColor={body.bg}
-                    backdropOpacity={0.9}
-                    style={styles.modal}
-                    isVisible={this.state.showModal}
-                    onBackButtonPress={() => {
-                        this.completeTransitionTask();
-                        this.setState({ showModal: false });
-                    }}
-                    useNativeDriver={isAndroid}
-                    hideModalContentWhileAnimating
-                >
-                    <SnapshotTransitionModalContent
-                        theme={this.props.theme}
-                        t={this.props.t}
-                        onPress={() => {
-                            this.completeTransitionTask();
-                            this.setState({ showModal: false });
-                        }}
-                    />
-                </Modal>
             </UserInactivity>
         );
     }
@@ -466,11 +395,13 @@ const mapStateToProps = (state) => ({
     isTransitioning: state.ui.isTransitioning,
     currentSetting: state.wallet.currentSetting,
     isTopBarActive: state.home.isTopBarActive,
+    currentRoute: state.home.childRoute,
     isFingerprintEnabled: state.settings.isFingerprintEnabled,
     isModalActive: state.ui.isModalActive,
     shouldTransitionForSnapshot: shouldTransitionForSnapshot(state),
     hasDisplayedSnapshotTransitionGuide: hasDisplayedSnapshotTransitionGuide(state),
     selectedAccountName: getSelectedAccountName(state),
+    isKeyboardActive: state.ui.isKeyboardActive,
 });
 
 const mapDispatchToProps = {
@@ -486,5 +417,5 @@ const mapDispatchToProps = {
 };
 
 export default WithUserActivity()(
-    WithBackPress()(withNamespaces(['home', 'global', 'login'])(connect(mapStateToProps, mapDispatchToProps)(Home))),
+    withNamespaces(['home', 'global', 'login'])(connect(mapStateToProps, mapDispatchToProps)(Home)),
 );

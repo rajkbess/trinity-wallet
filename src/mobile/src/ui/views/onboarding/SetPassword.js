@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withNamespaces } from 'react-i18next';
-import { StyleSheet, View, Text, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView } from 'react-native';
+import { StyleSheet, View, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { navigator } from 'libs/navigation';
 import { connect } from 'react-redux';
 import { setOnboardingComplete } from 'shared-modules/actions/accounts';
 import { clearWalletData, clearSeed, setPassword } from 'shared-modules/actions/wallet';
@@ -9,13 +10,11 @@ import { generateAlert } from 'shared-modules/actions/alerts';
 import SeedStore from 'libs/SeedStore';
 import { storeSaltInKeychain } from 'libs/keychain';
 import { generatePasswordHash, getSalt } from 'libs/crypto';
-import OnboardingButtons from 'ui/components/OnboardingButtons';
-import StatefulDropdownAlert from 'ui/components/StatefulDropdownAlert';
-import { isAndroid } from 'libs/device';
+import DualFooterButtons from 'ui/components/DualFooterButtons';
+import AnimatedComponent from 'ui/components/AnimatedComponent';
 import { width, height } from 'libs/dimensions';
 import InfoBox from 'ui/components/InfoBox';
-import { Icon } from 'ui/theme/icons';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import Header from 'ui/components/Header';
 import PasswordFields from 'ui/components/PasswordFields';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
@@ -29,13 +28,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     topContainer: {
-        flex: 1,
+        flex: 1.4,
         alignItems: 'center',
         justifyContent: 'flex-start',
-        paddingTop: height / 16,
     },
     midContainer: {
-        flex: 3,
+        flex: 2.6,
         justifyContent: 'space-around',
         alignItems: 'center',
         width,
@@ -47,14 +45,14 @@ const styles = StyleSheet.create({
     },
     infoText: {
         fontFamily: 'SourceSansPro-Light',
-        fontSize: GENERAL.fontSize3,
-        textAlign: 'left',
+        fontSize: Styling.fontSize3,
+        textAlign: 'center',
         backgroundColor: 'transparent',
     },
     warningText: {
         fontFamily: 'SourceSansPro-Bold',
-        fontSize: GENERAL.fontSize3,
-        textAlign: 'left',
+        fontSize: Styling.fontSize3,
+        textAlign: 'center',
         paddingTop: height / 70,
         backgroundColor: 'transparent',
     },
@@ -63,8 +61,8 @@ const styles = StyleSheet.create({
 /** Set Password component */
 class SetPassword extends Component {
     static propTypes = {
-        /** Navigation object */
-        navigator: PropTypes.object.isRequired,
+        /** Component ID */
+        componentId: PropTypes.string.isRequired,
         /** @ignore */
         t: PropTypes.func.isRequired,
         /** @ignore */
@@ -143,28 +141,26 @@ class SetPassword extends Component {
      * @method onBackPress
      */
     onBackPress() {
-        this.props.navigator.pop({
-            animated: false,
-        });
+        navigator.pop(this.props.componentId);
     }
 
     navigateToOnboardingComplete() {
         const { theme: { body } } = this.props;
-        this.props.navigator.push({
-            screen: 'onboardingComplete',
-            navigatorStyle: {
-                navBarHidden: true,
-                navBarTransparent: true,
-                topBarElevationShadowEnabled: false,
-                screenBackgroundColor: body.bg,
-                drawUnderStatusBar: true,
-                statusBarColor: body.bg,
+        navigator.push('onboardingComplete', {
+            animations: {
+                push: {
+                    enable: false,
+                },
+                pop: {
+                    enable: false,
+                },
             },
-            appStyle: {
-                orientation: 'portrait',
-                keepStyleAcrossPush: true,
+            layout: {
+                backgroundColor: body.bg,
             },
-            animated: false,
+            statusBar: {
+                backgroundColor: body.bg,
+            },
         });
     }
 
@@ -173,29 +169,36 @@ class SetPassword extends Component {
         const { password, reentry } = this.state;
 
         return (
-            <View style={styles.container}>
-                <TouchableWithoutFeedback style={{ flex: 1, width }} onPress={Keyboard.dismiss} accessible={false}>
-                    <View style={[styles.container, { backgroundColor: body.bg }]}>
-                        <View style={styles.topContainer}>
-                            <Icon name="iota" size={width / 8} color={body.color} />
-                            <View style={{ flex: 0.7 }} />
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                <View style={[styles.container, { backgroundColor: body.bg }]}>
+                    <View style={styles.topContainer}>
+                        <AnimatedComponent
+                            animationInType={['slideInRight', 'fadeIn']}
+                            animationOutType={['slideOutLeft', 'fadeOut']}
+                            delay={400}
+                        >
                             <Header textColor={body.color}>{t('choosePassword')}</Header>
-                        </View>
-                        <KeyboardAvoidingView behavior={isAndroid ? null : 'padding'} style={styles.midContainer}>
-                            <InfoBox
-                                body={body}
-                                text={
-                                    <View>
-                                        <Text style={[styles.infoText, { color: body.color }]}>
-                                            {t('anEncryptedCopy')}
-                                        </Text>
-                                        <Text style={[styles.warningText, { color: body.color }]}>
-                                            {t('changePassword:ensureStrongPassword')}
-                                        </Text>
-                                    </View>
-                                }
-                            />
-                            <View style={{ flex: 0.2 }} />
+                        </AnimatedComponent>
+                    </View>
+                    <View style={styles.midContainer}>
+                        <AnimatedComponent
+                            animationInType={['slideInRight', 'fadeIn']}
+                            animationOutType={['slideOutLeft', 'fadeOut']}
+                            delay={266}
+                        >
+                            <InfoBox>
+                                <Text style={[styles.infoText, { color: body.color }]}>{t('anEncryptedCopy')}</Text>
+                                <Text style={[styles.warningText, { color: body.color }]}>
+                                    {t('changePassword:ensureStrongPassword')}
+                                </Text>
+                            </InfoBox>
+                        </AnimatedComponent>
+                        <View style={{ flex: 0.2 }} />
+                        <AnimatedComponent
+                            animationInType={['slideInRight', 'fadeIn']}
+                            animationOutType={['slideOutLeft', 'fadeOut']}
+                            delay={266}
+                        >
                             <PasswordFields
                                 onRef={(ref) => {
                                     this.passwordFields = ref;
@@ -206,27 +209,28 @@ class SetPassword extends Component {
                                 setPassword={(password) => this.setState({ password })}
                                 setReentry={(reentry) => this.setState({ reentry })}
                             />
-                            <View style={{ flex: 0.3 }} />
-                        </KeyboardAvoidingView>
-                        <View style={styles.bottomContainer}>
-                            <OnboardingButtons
+                        </AnimatedComponent>
+                        <View style={{ flex: 0.35 }} />
+                    </View>
+                    <View style={styles.bottomContainer}>
+                        <AnimatedComponent animationInType={['fadeIn']} animationOutType={['fadeOut']} delay={0}>
+                            <DualFooterButtons
                                 onLeftButtonPress={() => this.onBackPress()}
                                 onRightButtonPress={() => this.onDonePress()}
                                 leftButtonText={t('global:goBack')}
                                 rightButtonText={t('global:done')}
                             />
-                        </View>
+                        </AnimatedComponent>
                     </View>
-                </TouchableWithoutFeedback>
-                <StatefulDropdownAlert textColor={body.color} backgroundColor={body.bg} />
-            </View>
+                </View>
+            </TouchableWithoutFeedback>
         );
     }
 }
 
 const mapStateToProps = (state) => ({
     seed: state.wallet.seed,
-    accountName: state.wallet.additionalAccountName,
+    accountName: state.accounts.accountInfoDuringSetup.name,
     theme: state.settings.theme,
 });
 

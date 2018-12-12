@@ -127,10 +127,6 @@ const initialState = {
      */
     acceptedPrivacy: false,
     /**
-     * Keeps track if a user has visited the seed share tutorial on android devices
-     */
-    hasVisitedSeedShareTutorial: false,
-    /**
      * Determines if wallet should hide empty transactions on history screens
      */
     hideEmptyTransactions: false,
@@ -150,6 +146,10 @@ const initialState = {
         confirmations: true,
         messages: true,
     },
+    /**
+     * Desktop: Use system proxy settings
+     */
+    ignoreProxy: false,
 };
 
 const settingsReducer = (state = initialState, action) => {
@@ -267,11 +267,6 @@ const settingsReducer = (state = initialState, action) => {
                 ...state,
                 acceptedPrivacy: true,
             };
-        case ActionTypes.SET_SEED_SHARE_TUTORIAL_VISITATION_STATUS:
-            return {
-                ...state,
-                hasVisitedSeedShareTutorial: action.payload,
-            };
         case ActionTypes.TOGGLE_EMPTY_TRANSACTIONS:
             return {
                 ...state,
@@ -305,6 +300,11 @@ const settingsReducer = (state = initialState, action) => {
                     ...state.notifications,
                     [action.payload.type]: action.payload.enabled,
                 },
+            };
+        case ActionTypes.SET_PROXY:
+            return {
+                ...state,
+                ignoreProxy: action.payload,
             };
     }
 

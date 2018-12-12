@@ -8,25 +8,29 @@ import whiteWelcomeAnimationPartOne from 'shared-modules/animations/welcome-part
 import whiteWelcomeAnimationPartTwo from 'shared-modules/animations/welcome-part-two-white.json';
 import blackWelcomeAnimationPartOne from 'shared-modules/animations/welcome-part-one-black.json';
 import blackWelcomeAnimationPartTwo from 'shared-modules/animations/welcome-part-two-black.json';
+import { navigator } from 'libs/navigation';
 import { withNamespaces } from 'react-i18next';
 import { connect } from 'react-redux';
 import KeepAwake from 'react-native-keep-awake';
 import LottieView from 'lottie-react-native';
 import { getAccountInfo, getFullAccountInfo } from 'shared-modules/actions/accounts';
 import { setLoginRoute } from 'shared-modules/actions/ui';
-import tinycolor from 'tinycolor2';
 import { getMarketData, getChartData, getPrice } from 'shared-modules/actions/marketData';
 import { getCurrencyData } from 'shared-modules/actions/settings';
 import { setSetting } from 'shared-modules/actions/wallet';
 import { changeHomeScreenRoute } from 'shared-modules/actions/home';
-import { getSelectedAccountName, getSelectedAccountType } from 'shared-modules/selectors/accounts';
-import GENERAL from 'ui/theme/general';
+import {
+    getSelectedAccountName,
+    getSelectedAccountMeta,
+    getAccountNamesFromState,
+    isSettingUpNewAccount,
+} from 'shared-modules/selectors/accounts';
+import { Styling } from 'ui/theme/general';
 import SeedStore from 'libs/SeedStore';
-import DynamicStatusBar from 'ui/components/DynamicStatusBar';
-import StatefulDropdownAlert from 'ui/components/StatefulDropdownAlert';
-import { isAndroid } from 'libs/device';
+import { isAndroid, isIPhoneX } from 'libs/device';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
-import Button from 'ui/components/Button';
+import SingleFooterButton from 'ui/components/SingleFooterButton';
+import AnimatedComponent from 'ui/components/AnimatedComponent';
 
 import { width, height } from 'libs/dimensions';
 
@@ -38,7 +42,7 @@ const styles = StyleSheet.create({
     },
     infoText: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         textAlign: 'center',
         paddingBottom: height / 30,
@@ -62,12 +66,17 @@ const styles = StyleSheet.create({
     infoTextContainer: {
         flex: 1,
         justifyContent: 'flex-end',
-        paddingBottom: height / 20,
+        paddingBottom: isIPhoneX ? height / 40 : height / 20,
     },
-    nodeChangeContainer: {
+    bottomContainer: {
         position: 'absolute',
         bottom: 0,
         alignItems: 'center',
+        justifyContent: 'center',
+        width,
+    },
+    loadingAnimationContainer: {
+        height,
         justifyContent: 'center',
     },
 });
@@ -77,16 +86,18 @@ class Loading extends Component {
     static propTypes = {
         /** @ignore */
         addingAdditionalAccount: PropTypes.bool.isRequired,
-        /** Navigation object */
-        navigator: PropTypes.object.isRequired,
         /** @ignore */
         getAccountInfo: PropTypes.func.isRequired,
         /** @ignore */
+        hasErrorFetchingAccountInfo: PropTypes.bool.isRequired,
+        /** @ignore */
         getFullAccountInfo: PropTypes.func.isRequired,
+        /** @ignore */
+        hasErrorFetchingFullAccountInfo: PropTypes.bool.isRequired,
         /** Name for currently selected account */
         selectedAccountName: PropTypes.string,
         /** Name for currently selected account */
-        selectedAccountType: PropTypes.string.isRequired,
+        selectedAccountMeta: PropTypes.object.isRequired,
         /** @ignore */
         theme: PropTypes.object.isRequired,
         /** @ignore */
@@ -100,7 +111,7 @@ class Loading extends Component {
         /** @ignore */
         additionalAccountName: PropTypes.string.isRequired,
         /** @ignore */
-        additionalAccountType: PropTypes.string.isRequired,
+        additionalAccountMeta: PropTypes.object.isRequired,
         /** @ignore */
         password: PropTypes.object.isRequired,
         /** @ignore */
@@ -117,15 +128,20 @@ class Loading extends Component {
         deepLinkActive: PropTypes.bool.isRequired,
         /** @ignore */
         setLoginRoute: PropTypes.func.isRequired,
+        /** All stored account names */
+        accountNames: PropTypes.array.isRequired,
+        /** @ignore */
+        isThemeDark: PropTypes.bool.isRequired,
     };
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
         this.state = {
             elipsis: '',
             animationPartOneDone: false,
             displayNodeChangeOption: false,
         };
+        this.welcomeAnimationPath = props.isThemeDark ? whiteWelcomeAnimationPartOne : blackWelcomeAnimationPartOne;
         this.onChangeNodePress = this.onChangeNodePress.bind(this);
     }
 
@@ -133,48 +149,62 @@ class Loading extends Component {
         const {
             addingAdditionalAccount,
             additionalAccountName,
-            additionalAccountType,
+            additionalAccountMeta,
             selectedAccountName,
-            selectedAccountType,
+            selectedAccountMeta,
             password,
-            navigator,
             deepLinkActive,
         } = this.props;
-
+        this.props.setLoginRoute('login');
         leaveNavigationBreadcrumb('Loading');
+        KeepAwake.activate();
         this.animation.play();
-
-        if (!addingAdditionalAccount) {
+        if (addingAdditionalAccount) {
+            timer.setTimeout('waitTimeout', () => this.onWaitTimeout(), 150000);
+            if (!isAndroid) {
+                this.animateElipses(['.', '..', ''], 0);
+            }
+        } else {
             this.setAnimationOneTimout();
             timer.setTimeout('waitTimeout', () => this.onWaitTimeout(), 15000);
         }
+        this.props.setSetting('mainSettings');
         this.getWalletData();
-        if (addingAdditionalAccount && !isAndroid) {
-            this.animateElipses(['.', '..', ''], 0);
-        }
-
-        KeepAwake.activate();
         if (deepLinkActive) {
             this.props.changeHomeScreenRoute('send');
         } else {
             this.props.changeHomeScreenRoute('balance');
         }
-        this.props.setSetting('mainSettings');
-
         if (addingAdditionalAccount) {
-            const seedStore = new SeedStore[additionalAccountType](password, additionalAccountName);
-            this.props.getFullAccountInfo(seedStore, additionalAccountName, navigator);
+            const seedStore = new SeedStore[additionalAccountMeta.type](password, additionalAccountName);
+            this.props.getFullAccountInfo(seedStore, additionalAccountName);
         } else {
-            const seedStore = new SeedStore[selectedAccountType](password, selectedAccountName);
-            this.props.getAccountInfo(seedStore, selectedAccountName, navigator);
+            const seedStore = new SeedStore[selectedAccountMeta.type](password, selectedAccountName);
+            this.props.getAccountInfo(seedStore, selectedAccountName);
         }
     }
 
     componentWillReceiveProps(newProps) {
-        const { ready, addingAdditionalAccount } = this.props;
+        const {
+            ready,
+            addingAdditionalAccount,
+            hasErrorFetchingAccountInfo,
+            hasErrorFetchingFullAccountInfo,
+            accountNames,
+        } = this.props;
         const isReady = !ready && newProps.ready;
         if ((isReady && this.state.animationPartOneDone) || (isReady && addingAdditionalAccount)) {
             this.launchHomeScreen();
+        }
+        if (!hasErrorFetchingAccountInfo && newProps.hasErrorFetchingAccountInfo) {
+            this.redirectToLogin();
+        }
+        if (!hasErrorFetchingFullAccountInfo && newProps.hasErrorFetchingFullAccountInfo) {
+            if (accountNames.length <= 1) {
+                this.redirectToLogin();
+            } else {
+                this.redirectToHome();
+            }
         }
     }
 
@@ -193,20 +223,8 @@ class Loading extends Component {
     }
 
     onChangeNodePress() {
-        const { theme: { body } } = this.props;
         this.props.setLoginRoute('nodeSelection');
-        this.props.navigator.resetTo({
-            screen: 'login',
-            navigatorStyle: {
-                navBarHidden: true,
-                navBarTransparent: true,
-                topBarElevationShadowEnabled: false,
-                screenBackgroundColor: body.bg,
-                drawUnderStatusBar: true,
-                statusBarColor: body.bg,
-            },
-            animated: false,
-        });
+        this.redirectToLogin();
     }
 
     getWalletData() {
@@ -218,7 +236,7 @@ class Loading extends Component {
     }
 
     setAnimationOneTimout() {
-        timer.setTimeout('animationTimeout', () => this.playAnimationTwo(), 2000);
+        timer.setTimeout('animationTimeout', () => this.playAnimationTwo(), 1900);
     }
 
     /**
@@ -227,26 +245,19 @@ class Loading extends Component {
      * @method launchHomeScreen
      */
     launchHomeScreen() {
-        const { theme: { body, bar } } = this.props;
         KeepAwake.deactivate();
-        this.props.navigator.resetTo({
-            screen: 'home',
-            navigatorStyle: {
-                navBarHidden: true,
-                navBarTransparent: true,
-                topBarElevationShadowEnabled: false,
-                screenBackgroundColor: body.bg,
-                drawUnderStatusBar: true,
-                statusBarColor: bar.alt,
-            },
-            animated: false,
-        });
+        this.redirectToHome();
         this.clearTimeouts();
         this.setState({ animationPartOneDone: false, displayNodeChangeOption: false });
     }
 
     playAnimationTwo() {
-        this.setState({ animationPartOneDone: true });
+        this.welcomeAnimationPath = this.props.isThemeDark
+            ? whiteWelcomeAnimationPartTwo
+            : blackWelcomeAnimationPartTwo;
+        this.setState({
+            animationPartOneDone: true,
+        });
         this.animation.play();
     }
 
@@ -267,22 +278,65 @@ class Loading extends Component {
         }, time);
     };
 
+    /**
+     * Redirect to login page
+     *
+     * @method redirectToLogin
+     */
+    redirectToLogin() {
+        const { theme: { body } } = this.props;
+        navigator.setStackRoot('login', {
+            animations: {
+                setStackRoot: {
+                    enable: false,
+                },
+            },
+            layout: {
+                backgroundColor: body.bg,
+            },
+            statusBar: {
+                backgroundColor: body.bg,
+            },
+        });
+    }
+
+    /**
+     * Redirect to home page
+     *
+     * @method redirectToHome
+     */
+    redirectToHome() {
+        const { theme: { body, bar } } = this.props;
+        navigator.setStackRoot('home', {
+            animations: {
+                setStackRoot: {
+                    enable: false,
+                },
+            },
+            layout: {
+                backgroundColor: body.bg,
+            },
+            statusBar: {
+                backgroundColor: bar.alt,
+            },
+        });
+    }
+
     render() {
-        const { t, addingAdditionalAccount, theme: { body, primary } } = this.props;
-        const { displayNodeChangeOption } = this.state;
+        const { t, addingAdditionalAccount, theme: { body, primary }, isThemeDark } = this.props;
         const textColor = { color: body.color };
-        const isBgLight = tinycolor(body.bg).isLight();
-        const loadingAnimationPath = isBgLight ? blackLoadingAnimation : whiteLoadingAnimation;
-        const welcomeAnimationPartOnePath = isBgLight ? blackWelcomeAnimationPartOne : whiteWelcomeAnimationPartOne;
-        const welcomeAnimationPartTwoPath = isBgLight ? blackWelcomeAnimationPartTwo : whiteWelcomeAnimationPartTwo;
+        const loadingAnimationPath = isThemeDark ? whiteLoadingAnimation : blackLoadingAnimation;
 
         if (addingAdditionalAccount) {
             return (
                 <View style={[styles.container, { backgroundColor: body.bg }]}>
-                    <DynamicStatusBar backgroundColor={body.bg} />
-                    <View style={{ flex: 1 }} />
                     <View style={styles.animationContainer}>
-                        <View>
+                        <AnimatedComponent
+                            animationInType={['fadeIn']}
+                            animationOutType={['fadeOut']}
+                            delay={0}
+                            style={styles.loadingAnimationContainer}
+                        >
                             <LottieView
                                 ref={(animation) => {
                                     this.animation = animation;
@@ -291,67 +345,64 @@ class Loading extends Component {
                                 style={styles.animationNewSeed}
                                 loop
                             />
-                        </View>
+                        </AnimatedComponent>
                     </View>
-                    <View style={styles.infoTextContainer}>
-                        <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                            <Text style={[styles.infoText, textColor]}>{t('loadingFirstTime')}</Text>
-                            <Text style={[styles.infoText, textColor]}>{t('doNotMinimise')}</Text>
-                            <View style={{ flexDirection: 'row' }}>
-                                <Text style={[styles.infoText, textColor]}>{t('thisMayTake')}</Text>
-                                <View style={{ alignItems: 'flex-start', width: width / 30 }}>
-                                    <Text style={[styles.infoText, textColor]}>
-                                        {isAndroid ? '..' : this.state.elipsis}
-                                    </Text>
+                    <AnimatedComponent
+                        animationInType={['fadeIn']}
+                        animationOutType={['fadeOut']}
+                        delay={0}
+                        style={styles.bottomContainer}
+                    >
+                        <View style={styles.infoTextContainer}>
+                            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                                <Text style={[styles.infoText, textColor]}>{t('loadingFirstTime')}</Text>
+                                <Text style={[styles.infoText, textColor]}>{t('doNotMinimise')}</Text>
+                                <View style={{ flexDirection: 'row' }}>
+                                    <Text style={[styles.infoText, textColor]}>{t('thisMayTake')}</Text>
+                                    <View style={{ alignItems: 'flex-start', width: width / 30 }}>
+                                        <Text style={[styles.infoText, textColor]}>
+                                            {isAndroid ? '..' : this.state.elipsis}
+                                        </Text>
+                                    </View>
                                 </View>
                             </View>
                         </View>
-                    </View>
-                    <StatefulDropdownAlert textColor={body.color} backgroundColor={body.bg} />
+                    </AnimatedComponent>
                 </View>
             );
         }
 
         return (
             <View style={[styles.container, { backgroundColor: body.bg }]}>
-                <DynamicStatusBar backgroundColor={body.bg} />
                 <View style={styles.animationContainer}>
-                    <View>
-                        {(!this.state.animationPartOneDone && (
-                            <LottieView
-                                ref={(animation) => {
-                                    this.animation = animation;
-                                }}
-                                source={welcomeAnimationPartOnePath}
-                                style={styles.animationLoading}
-                            />
-                        )) || (
-                            <LottieView
-                                ref={(animation) => {
-                                    this.animation = animation;
-                                }}
-                                source={welcomeAnimationPartTwoPath}
-                                style={styles.animationLoading}
-                                loop
-                            />
-                        )}
-                    </View>
-                    {displayNodeChangeOption && (
-                        <View style={styles.nodeChangeContainer}>
+                    <AnimatedComponent animationInType={['fadeIn']} animationOutType={['fadeOut']} delay={0}>
+                        <LottieView
+                            ref={(animation) => {
+                                this.animation = animation;
+                            }}
+                            source={this.welcomeAnimationPath}
+                            style={styles.animationLoading}
+                        />
+                    </AnimatedComponent>
+                    {this.state.displayNodeChangeOption && (
+                        <AnimatedComponent
+                            animationInType={['fadeIn']}
+                            animationOutType={['fadeOut']}
+                            delay={0}
+                            style={styles.bottomContainer}
+                        >
                             <Text style={[styles.infoText, textColor]}>{t('takingAWhile')}...</Text>
-                            <Button
-                                onPress={this.onChangeNodePress}
-                                style={{
+                            <SingleFooterButton
+                                onButtonPress={this.onChangeNodePress}
+                                buttonStyle={{
                                     wrapper: { backgroundColor: primary.color },
                                     children: { color: primary.body },
                                 }}
-                            >
-                                {t('global:changeNode')}
-                            </Button>
-                        </View>
+                                buttonText={t('global:changeNode')}
+                            />
+                        </AnimatedComponent>
                     )}
                 </View>
-                <StatefulDropdownAlert textColor={body.color} backgroundColor={body.bg} />
             </View>
         );
     }
@@ -359,13 +410,17 @@ class Loading extends Component {
 
 const mapStateToProps = (state) => ({
     selectedAccountName: getSelectedAccountName(state),
-    selectedAccountType: getSelectedAccountType(state),
-    addingAdditionalAccount: state.wallet.addingAdditionalAccount,
-    additionalAccountName: state.wallet.additionalAccountName,
-    additionalAccountType: state.wallet.additionalAccountType,
+    selectedAccountMeta: getSelectedAccountMeta(state),
+    accountNames: getAccountNamesFromState(state),
+    hasErrorFetchingAccountInfo: state.ui.hasErrorFetchingAccountInfo,
+    hasErrorFetchingFullAccountInfo: state.ui.hasErrorFetchingFullAccountInfo,
+    addingAdditionalAccount: isSettingUpNewAccount(state),
+    additionalAccountName: state.accounts.accountInfoDuringSetup.name,
+    additionalAccountMeta: state.accounts.accountInfoDuringSetup.meta,
     ready: state.wallet.ready,
     password: state.wallet.password,
     theme: state.settings.theme,
+    isThemeDark: state.settings.theme.isDark,
     currency: state.settings.currency,
     deepLinkActive: state.wallet.deepLinkActive,
 });

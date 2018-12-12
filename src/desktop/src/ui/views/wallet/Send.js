@@ -14,6 +14,7 @@ import Icon from 'ui/components/Icon';
 import Button from 'ui/components/Button';
 import Progress from 'ui/components/Progress';
 import Balance from 'ui/components/Balance';
+import Checksum from 'ui/components/Checksum';
 import Confirm from 'ui/components/modal/Confirm';
 import withSendData from 'containers/wallet/Send';
 
@@ -35,7 +36,7 @@ class Send extends React.PureComponent {
         /** @ignore */
         password: PropTypes.object.isRequired,
         /** @ignore */
-        accountType: PropTypes.string.isRequired,
+        accountMeta: PropTypes.object.isRequired,
         /** @ignore */
         accountName: PropTypes.string.isRequired,
         /** @ignore */
@@ -93,21 +94,26 @@ class Send extends React.PureComponent {
     }
 
     confirmTransfer = async () => {
-        const { fields, password, accountName, accountType, sendTransfer, settings } = this.props;
+        const { fields, password, accountName, accountMeta, sendTransfer, settings } = this.props;
 
         this.setState({
             isTransferModalVisible: false,
         });
 
-        const seedStore = await new SeedStore[accountType](password, accountName);
+        const seedStore = await new SeedStore[accountMeta.type](password, accountName, accountMeta);
 
         const powFn = !settings.remotePoW ? Electron.powFn : null;
 
-        sendTransfer(seedStore, fields.address, parseInt(fields.amount) || 0, fields.message, powFn);
+        const message =
+            SeedStore[accountMeta.type].isMessageAvailable || parseInt(fields.amount || '0') === 0
+                ? fields.message
+                : '';
+
+        sendTransfer(seedStore, fields.address, parseInt(fields.amount) || 0, message, powFn);
     };
 
     render() {
-        const { fields, isSending, availableBalance, settings, progress, t } = this.props;
+        const { accountMeta, fields, isSending, availableBalance, settings, progress, t } = this.props;
         const { isTransferModalVisible, isUnitsVisible } = this.state;
 
         const transferContents =
@@ -118,6 +124,8 @@ class Send extends React.PureComponent {
                       round(fields.amount * settings.usdPrice / 1000000 * settings.conversionRate * 100) / 100
                   ).toFixed(2)})`
                 : t('transferConfirmation:aMessage');
+
+        const isMessageAvailable = SeedStore[accountMeta.type].isMessageAvailable;
 
         return (
             <form className={css.send} onSubmit={(e) => this.validateInputs(e)}>
@@ -130,7 +138,11 @@ class Send extends React.PureComponent {
                         onConfirm={() => this.confirmTransfer()}
                         content={{
                             title: t('transferConfirmation:youAreAbout', { contents: transferContents }),
-                            message: fields.address,
+                            message: (
+                                <span className={css.address}>
+                                    <Checksum address={fields.address} />
+                                </span>
+                            ),
                             confirm: t('send'),
                             cancel: t('cancel'),
                         }}
@@ -152,8 +164,9 @@ class Send extends React.PureComponent {
                         onChange={(value) => this.props.setSendAmountField(value)}
                     />
                     <TextInput
-                        value={fields.message}
+                        value={isMessageAvailable || parseInt(fields.amount || '0') === 0 ? fields.message : ''}
                         label={t('send:message')}
+                        disabled={!isMessageAvailable && parseInt(fields.amount) > 0}
                         onChange={(value) => this.props.setSendMessageField(value)}
                     />
                     <footer>

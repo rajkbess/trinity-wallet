@@ -7,11 +7,11 @@ import { Switch, Route } from 'react-router-dom';
 import { connect } from 'react-redux';
 
 import SeedStore from 'libs/SeedStore';
-import { capitalize } from 'libs/helpers';
+import { capitalize } from 'libs/iota/converter';
 
 import { getAccountInfo } from 'actions/accounts';
 
-import { getSelectedAccountName, getSelectedAccountType } from 'selectors/accounts';
+import { getSelectedAccountName, getSelectedAccountMeta } from 'selectors/accounts';
 
 import Icon from 'ui/components/Icon';
 import List from 'ui/components/List';
@@ -33,7 +33,7 @@ class Dashboard extends React.PureComponent {
         /** @ignore */
         accountName: PropTypes.string.isRequired,
         /** @ignore */
-        accountType: PropTypes.string.isRequired,
+        accountMeta: PropTypes.object.isRequired,
         /** @ignore */
         password: PropTypes.object,
         /** @ignore */
@@ -55,11 +55,11 @@ class Dashboard extends React.PureComponent {
     }
 
     updateAccount = async () => {
-        const { password, accountName, accountType } = this.props;
+        const { password, accountName, accountMeta } = this.props;
 
-        const seedStore = await new SeedStore[accountType](password, accountName);
+        const seedStore = await new SeedStore[accountMeta.type](password, accountName, accountMeta);
 
-        this.props.getAccountInfo(seedStore, accountName, null, Electron.notify);
+        this.props.getAccountInfo(seedStore, accountName, Electron.notify);
     };
 
     render() {
@@ -125,7 +125,7 @@ class Dashboard extends React.PureComponent {
 
 const mapStateToProps = (state) => ({
     accountName: getSelectedAccountName(state),
-    accountType: getSelectedAccountType(state),
+    accountMeta: getSelectedAccountMeta(state),
     password: state.wallet.password,
     isDeepLinkActive: state.wallet.deepLinkActive,
 });

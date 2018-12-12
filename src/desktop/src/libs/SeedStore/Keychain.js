@@ -1,6 +1,6 @@
 /* global Electron */
 import { ACC_MAIN, sha256, encrypt, decrypt } from 'libs/crypto';
-import { byteToTrit } from 'libs/helpers';
+import { byteToTrit } from 'libs/iota/converter';
 import { prepareTransfersAsync } from 'libs/iota/extendedApi';
 
 // Prefix for seed account titles stored in Keychain
@@ -20,6 +20,30 @@ class Keychain {
             }
             return this;
         })();
+    }
+
+    /**
+     * If seed is available in plain form
+     * @returns {boolean}
+     */
+    static get isSeedAvailable() {
+        return true;
+    }
+
+    /**
+     * If attaching a message to transactions is available
+     * @returns {boolean}
+     */
+    static get isMessageAvailable() {
+        return true;
+    }
+
+    /**
+     * Return max supported input count
+     * @returns {number} - 0 for no limit
+     */
+    get maxInputs() {
+        return 0;
     }
 
     /**
@@ -133,6 +157,14 @@ class Keychain {
     };
 
     /**
+     * Placeholder for Trinity compatibillity
+     * @returns {boolean}
+     */
+    validateAddress = () => {
+        return true;
+    };
+
+    /**
      * Prepare transfers
      */
     prepareTransfers = async (transfers, options = null) => {
@@ -161,6 +193,40 @@ class Keychain {
             return trits;
         }
         return decryptedVault;
+    };
+
+    /**
+     * Unique seed check
+     * @param {array} Seed - Seed to check
+     * @returns {boolean} If Seed is unique
+     */
+    isUniqueSeed = async (seed) => {
+        const vault = await Electron.listKeychain();
+        if (!vault) {
+            throw new Error('Local storage not available');
+        }
+        try {
+            const accounts = vault.filter((acc) => acc.account !== ACC_MAIN && acc.account !== `${ACC_MAIN}-salt`);
+
+            for (let i = 0; i < accounts.length; i++) {
+                const account = accounts[i];
+
+                const vaultSeed = await decrypt(account.password, this.key);
+
+                if (
+                    vaultSeed.length === seed.length &&
+                    seed.every((v, x) => {
+                        return v % 27 === vaultSeed[x] % 27;
+                    })
+                ) {
+                    return false;
+                }
+            }
+
+            return true;
+        } catch (err) {
+            throw err;
+        }
     };
 
     /**

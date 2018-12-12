@@ -10,7 +10,7 @@ import { width, height } from 'libs/dimensions';
 import { Icon } from 'ui/theme/icons';
 import InfoBox from 'ui/components/InfoBox';
 import Toggle from 'ui/components/Toggle';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
 const styles = StyleSheet.create({
@@ -34,25 +34,25 @@ const styles = StyleSheet.create({
     },
     infoText: {
         fontFamily: 'SourceSansPro-Light',
-        fontSize: GENERAL.fontSize3,
-        textAlign: 'left',
+        fontSize: Styling.fontSize3,
+        textAlign: 'center',
         backgroundColor: 'transparent',
     },
     itemLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: height / 50,
+        paddingVertical: height / 70,
         justifyContent: 'flex-start',
     },
     titleTextLeft: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         marginLeft: width / 20,
     },
     toggleText: {
         fontFamily: Fonts.secondary,
-        fontSize: GENERAL.fontSize4,
+        fontSize: Styling.fontSize4,
         backgroundColor: 'transparent',
         textAlign: 'center',
     },
@@ -99,17 +99,12 @@ class Pow extends Component {
                 <View style={styles.container}>
                     <View style={styles.topContainer}>
                         <View style={{ flex: 2 }} />
-                        <InfoBox
-                            body={body}
-                            text={
-                                <View>
-                                    <Text style={[styles.infoText, textColor]}>{t('feeless')}</Text>
-                                    <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
-                                        {t('localOrRemote')}
-                                    </Text>
-                                </View>
-                            }
-                        />
+                        <InfoBox>
+                            <Text style={[styles.infoText, textColor]}>{t('feeless')}</Text>
+                            <Text style={[styles.infoText, textColor, { paddingTop: height / 50 }]}>
+                                {t('localOrRemote')}
+                            </Text>
+                        </InfoBox>
                         <View style={{ flex: 1.1 }} />
                         <TouchableWithoutFeedback
                             onPress={this.onChange}

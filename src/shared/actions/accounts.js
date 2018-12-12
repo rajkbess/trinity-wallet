@@ -1,8 +1,12 @@
+import some from 'lodash/some';
+import isEmpty from 'lodash/isEmpty';
+import isNumber from 'lodash/isNumber';
 import {
     selectedAccountStateFactory,
     getAccountNamesFromState,
     getNodesFromState,
     getSelectedNodeFromState,
+    getAccountInfoDuringSetup,
 } from '../selectors/accounts';
 import { syncAccount, getAccountData } from '../libs/iota/accounts';
 import { setSeedIndex } from './wallet';
@@ -16,7 +20,6 @@ import {
 } from '../actions/alerts';
 import { changeNode } from '../actions/settings';
 import { withRetriesOnDifferentNodes, getRandomNodes } from '../libs/iota/utils';
-import { pushScreen } from '../libs/utils';
 import Errors from '../libs/errors';
 import { DEFAULT_RETRIES } from '../config';
 
@@ -42,11 +45,13 @@ export const ActionTypes = {
     ACCOUNT_INFO_FETCH_ERROR: 'IOTA/ACCOUNTS/ACCOUNT_INFO_FETCH_ERROR',
     SYNC_ACCOUNT_BEFORE_MANUAL_PROMOTION: 'IOTA/ACCOUNTS/SYNC_ACCOUNT_BEFORE_MANUAL_PROMOTION',
     SET_BASIC_ACCOUNT_INFO: 'IOTA/ACCOUNTS/SET_BASIC_ACCOUNT_INFO',
+    SET_ACCOUNT_INFO_DURING_SETUP: 'IOTA/ACCOUNTS/SET_ACCOUNT_INFO_DURING_SETUP',
     MARK_TASK_AS_DONE: 'IOTA/ACCOUNTS/MARK_TASK_AS_DONE',
     MARK_BUNDLE_BROADCAST_STATUS_PENDING: 'IOTA/ACCOUNTS/MARK_BUNDLE_BROADCAST_STATUS_PENDING',
     MARK_BUNDLE_BROADCAST_STATUS_COMPLETE: 'IOTA/ACCOUNTS/MARK_BUNDLE_BROADCAST_STATUS_COMPLETE',
     SYNC_ACCOUNT_BEFORE_SWEEPING: 'IOTA/ACCOUNTS/SYNC_ACCOUNT_BEFORE_SWEEPING',
     OVERRIDE_ACCOUNT_INFO: 'IOTA/ACCOUNTS/OVERRIDE_ACCOUNT_INFO',
+    ASSIGN_ACCOUNT_INDEX: 'IOTA/ACCOUNTS/ASSIGN_ACCOUNT_INDEX',
 };
 
 /**
@@ -196,23 +201,23 @@ export const removeBundleFromUnconfirmedBundleTails = (payload) => ({
 /**
  * Dispatch when information for an additional account is about to be fetched
  *
- * @method fullAccountInfoSeedFetchRequest
+ * @method fullAccountInfoFetchRequest
  *
  * @returns {{type: {string} }}
  */
-export const fullAccountInfoSeedFetchRequest = () => ({
+export const fullAccountInfoFetchRequest = () => ({
     type: ActionTypes.FULL_ACCOUNT_INFO_FETCH_REQUEST,
 });
 
 /**
  * Dispatch when account information for an additional account is successfully fetched
  *
- * @method fullAccountInfoSeedFetchSuccess
+ * @method fullAccountInfoFetchSuccess
  * @param {object} payload
  *
  * @returns {{type: {string}, payload: {object} }}
  */
-export const fullAccountInfoSeedFetchSuccess = (payload) => ({
+export const fullAccountInfoFetchSuccess = (payload) => ({
     type: ActionTypes.FULL_ACCOUNT_INFO_FETCH_SUCCESS,
     payload,
 });
@@ -220,11 +225,11 @@ export const fullAccountInfoSeedFetchSuccess = (payload) => ({
 /**
  * Dispatch when an error occurs during the process of fetching information for an additional account
  *
- * @method fullAccountInfoSeedFetchError
+ * @method fullAccountInfoFetchError
  *
  * @returns {{type: {string} }}
  */
-export const fullAccountInfoSeedFetchError = () => ({
+export const fullAccountInfoFetchError = () => ({
     type: ActionTypes.FULL_ACCOUNT_INFO_FETCH_ERROR,
 });
 
@@ -314,6 +319,19 @@ export const setBasicAccountInfo = (payload) => ({
 });
 
 /**
+ * Dispatch to store account information during setup
+ *
+ * @method setAccountInfoDuringSetup
+ * @param {object} payload
+ *
+ * @returns {{type: {string}, payload: {object} }}
+ */
+export const setAccountInfoDuringSetup = (payload) => ({
+    type: ActionTypes.SET_ACCOUNT_INFO_DURING_SETUP,
+    payload,
+});
+
+/**
  * Dispatch to mark a task as completed in state
  *
  * For example: to display a modal if the user's balance on initial login is zero
@@ -388,22 +406,32 @@ export const overrideAccountInfo = (payload) => ({
 });
 
 /**
+ * Dispatch to (automatically) assign accountIndex to every account in state
+ *
+ * @method assignAccountIndex
+ *
+ * @returns {{type: {string} }}
+ */
+export const assignAccountIndex = () => ({
+    type: ActionTypes.ASSIGN_ACCOUNT_INDEX,
+});
+
+/**
  * Gets full account information for the first seed added to the wallet.
  *
  * @method getFullAccountInfo
  * @param  {object} seedStore - SeedStore class object
  * @param  {string} accountName
- * @param  {object} [navigator=null]
  *
  * @returns {function} dispatch
  */
-export const getFullAccountInfo = (seedStore, accountName, navigator = null) => {
+export const getFullAccountInfo = (seedStore, accountName) => {
     return (dispatch, getState) => {
-        dispatch(fullAccountInfoSeedFetchRequest());
+        dispatch(fullAccountInfoFetchRequest());
 
         const selectedNode = getSelectedNodeFromState(getState());
         const existingAccountNames = getAccountNamesFromState(getState());
-        const usedExistingSeed = getState().wallet.usedExistingSeed;
+        const usedExistingSeed = getAccountInfoDuringSetup(getState()).usedExistingSeed;
 
         withRetriesOnDifferentNodes(
             [selectedNode, ...getRandomNodes(getNodesFromState(getState()), DEFAULT_RETRIES, [selectedNode])],
@@ -412,12 +440,16 @@ export const getFullAccountInfo = (seedStore, accountName, navigator = null) => 
             .then(({ node, result }) => {
                 dispatch(changeNode(node));
 
-                dispatch(setSeedIndex(existingAccountNames.length));
+                const seedIndex = existingAccountNames.length;
+
+                dispatch(setSeedIndex(seedIndex));
                 dispatch(setBasicAccountInfo({ accountName, usedExistingSeed }));
 
-                result.accountType = getState().wallet.additionalAccountType;
+                // Assign account meta
+                result.accountMeta = getAccountInfoDuringSetup(getState()).meta;
+                result.accountIndex = seedIndex;
 
-                dispatch(fullAccountInfoSeedFetchSuccess(result));
+                dispatch(fullAccountInfoFetchSuccess(result));
             })
             .catch((err) => {
                 const dispatchErrors = () => {
@@ -427,20 +459,10 @@ export const getFullAccountInfo = (seedStore, accountName, navigator = null) => 
                         dispatch(generateAccountInfoErrorAlert(err));
                     }
                 };
-
-                dispatch(fullAccountInfoSeedFetchError());
-
+                dispatch(fullAccountInfoFetchError());
                 if (existingAccountNames.length === 0) {
-                    // If adding first seed
-                    pushScreen(navigator, 'login');
-                    // Add a slight delay to allow Login component and
-                    // StatefulDropdownAlert component (mobile) to instantiate properly.
-                    navigator ? setTimeout(dispatchErrors, 500) : dispatchErrors();
+                    setTimeout(dispatchErrors, 500);
                 } else {
-                    // If adding additional seed
-                    if (navigator) {
-                        navigator.pop({ animated: false });
-                    }
                     dispatchErrors();
                     seedStore.removeAccount(accountName);
                 }
@@ -491,15 +513,13 @@ export const manuallySyncAccount = (seedStore, accountName) => {
  * @method getAccountInfo
  * @param  {object} seedStore - SeedStore class object
  * @param  {string} accountName
- * @param  {object} [navigator=null]
  * @param  {function} notificationFn - New transaction callback function
  *
  * @returns {function} dispatch
  */
-export const getAccountInfo = (seedStore, accountName, navigator = null, notificationFn) => {
+export const getAccountInfo = (seedStore, accountName, notificationFn) => {
     return (dispatch, getState) => {
         dispatch(accountInfoFetchRequest());
-
         const existingAccountState = selectedAccountStateFactory(accountName)(getState());
         const selectedNode = getSelectedNodeFromState(getState());
 
@@ -512,12 +532,8 @@ export const getAccountInfo = (seedStore, accountName, navigator = null, notific
                 dispatch(accountInfoFetchSuccess(result));
             })
             .catch((err) => {
-                if (navigator) {
-                    navigator.pop({ animated: false });
-                }
-
                 dispatch(accountInfoFetchError());
-                dispatch(generateAccountInfoErrorAlert(err));
+                setTimeout(() => dispatch(generateAccountInfoErrorAlert(err)), 500);
             });
     };
 };
@@ -558,4 +574,18 @@ export const cleanUpAccountState = (seedStore, accountName) => (dispatch, getSta
         // Resolve new account state
         return result;
     });
+};
+
+/**
+ * Assign account index to each account if not already assigned
+ *
+ * @method assignAccountIndexIfNecessary
+ * @param {object} accountInfo
+ *
+ * @returns {function(*)}
+ */
+export const assignAccountIndexIfNecessary = (accountInfo) => (dispatch) => {
+    if (!isEmpty(accountInfo) && some(accountInfo, ({ index }) => !isNumber(index))) {
+        dispatch(assignAccountIndex());
+    }
 };

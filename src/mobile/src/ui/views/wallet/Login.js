@@ -5,18 +5,18 @@ import authenticator from 'authenticator';
 import PropTypes from 'prop-types';
 import KeepAwake from 'react-native-keep-awake';
 import SplashScreen from 'react-native-splash-screen';
-import { Linking, StyleSheet, View } from 'react-native';
+import { navigator } from 'libs/navigation';
+import { Linking, StyleSheet } from 'react-native';
+import timer from 'react-native-timer';
 import { parseAddress } from 'shared-modules/libs/iota/utils';
 import { setFullNode } from 'shared-modules/actions/settings';
 import { setPassword, setSetting, setDeepLink } from 'shared-modules/actions/wallet';
 import { setUserActivity, setLoginPasswordField, setLoginRoute } from 'shared-modules/actions/ui';
 import { generateAlert } from 'shared-modules/actions/alerts';
-import WithBackPressCloseApp from 'ui/components/BackPressCloseApp';
-import DynamicStatusBar from 'ui/components/DynamicStatusBar';
 import NodeOptionsOnLogin from 'ui/views/wallet/NodeOptionsOnLogin';
 import EnterPasswordOnLoginComponent from 'ui/components/EnterPasswordOnLogin';
+import AnimatedComponent from 'ui/components/AnimatedComponent';
 import Enter2FAComponent from 'ui/components/Enter2FA';
-import StatefulDropdownAlert from 'ui/components/StatefulDropdownAlert';
 import { authorize, getTwoFactorAuthKeyFromKeychain, hash } from 'libs/keychain';
 import { isAndroid } from 'libs/device';
 
@@ -31,8 +31,6 @@ const styles = StyleSheet.create({
 /** Login component */
 class Login extends Component {
     static propTypes = {
-        /** Navigation object */
-        navigator: PropTypes.object.isRequired,
         /** Set new password hash
          * @param {string} passwordHash
          */
@@ -61,11 +59,15 @@ class Login extends Component {
         setLoginRoute: PropTypes.func.isRequired,
         /** @ignore */
         isFingerprintEnabled: PropTypes.bool.isRequired,
+        /** @ignore */
+        forceUpdate: PropTypes.bool.isRequired,
     };
 
-    constructor() {
-        super();
-
+    constructor(props) {
+        super(props);
+        this.state = {
+            nextLoginRoute: props.loginRoute,
+        };
         this.onComplete2FA = this.onComplete2FA.bind(this);
         this.onLoginPress = this.onLoginPress.bind(this);
         this.setDeepUrl = this.setDeepUrl.bind(this);
@@ -83,8 +85,24 @@ class Login extends Component {
         this.props.setUserActivity({ inactive: false });
     }
 
+    componentWillReceiveProps(newProps) {
+        if (this.props.loginRoute !== newProps.loginRoute) {
+            this.animationOutType = this.getAnimation(this.props.loginRoute, newProps.loginRoute, false);
+            this.animationInType = this.getAnimation(this.props.loginRoute, newProps.loginRoute);
+            timer.setTimeout(
+                'delayRouteChange' + newProps.loginRoute,
+                () => {
+                    this.setState({ nextLoginRoute: newProps.loginRoute });
+                },
+                150,
+            );
+        }
+    }
+
     componentWillUnmount() {
         Linking.removeEventListener('url');
+        timer.clearTimeout('delayRouteChange' + this.props.loginRoute);
+        timer.clearTimeout('delayNavigation');
     }
 
     /**
@@ -94,8 +112,8 @@ class Login extends Component {
      * @returns {Promise<void>}
      */
     async onLoginPress() {
-        const { t, is2FAEnabled, hasConnection, password } = this.props;
-        if (!hasConnection) {
+        const { t, is2FAEnabled, hasConnection, password, forceUpdate } = this.props;
+        if (!hasConnection || forceUpdate) {
             return;
         }
         if (!password) {
@@ -144,12 +162,34 @@ class Login extends Component {
             const verified = authenticator.verifyToken(key, token);
             if (verified) {
                 this.navigateToLoading();
-                this.props.setLoginRoute('login');
             } else {
                 this.props.generateAlert('error', t('twoFA:wrongCode'), t('twoFA:wrongCodeExplanation'));
             }
         } else {
             this.props.generateAlert('error', t('twoFA:emptyCode'), t('twoFA:emptyCodeExplanation'));
+        }
+    }
+
+    /**
+     * Gets animation according to current and next login route
+     *
+     * @param {string} currentLoginRoute
+     * @param {string} nextLoginRoute
+     * @param {bool} animationIn
+     * @returns {object}
+     */
+    getAnimation(currentLoginRoute, nextLoginRoute, animationIn = true) {
+        const routes = ['login', 'nodeOptions', 'customNode', 'nodeSelection', 'complete2FA'];
+        if (routes.indexOf(currentLoginRoute) < routes.indexOf(nextLoginRoute)) {
+            if (animationIn) {
+                return ['slideInRightSmall', 'fadeIn'];
+            }
+            return ['slideOutLeftSmall', 'fadeOut'];
+        } else if (routes.indexOf(currentLoginRoute) > routes.indexOf(nextLoginRoute)) {
+            if (animationIn) {
+                return ['slideInLeftSmall', 'fadeIn'];
+            }
+            return ['slideOutRightSmall', 'fadeOut'];
         }
     }
 
@@ -174,27 +214,43 @@ class Login extends Component {
      */
     navigateToLoading() {
         const { theme: { body } } = this.props;
-        this.props.navigator.resetTo({
-            screen: 'loading',
-            navigatorStyle: {
-                navBarHidden: true,
-                navBarTransparent: true,
-                topBarElevationShadowEnabled: false,
-                screenBackgroundColor: body.bg,
-                drawUnderStatusBar: true,
-                statusBarColor: body.bg,
+        this.animationOutType = ['fadeOut'];
+        timer.setTimeout(
+            'delayNavigation',
+            () => {
+                navigator.setStackRoot('loading', {
+                    animations: {
+                        setStackRoot: {
+                            enable: false,
+                        },
+                    },
+                    layout: {
+                        backgroundColor: body.bg,
+                    },
+                    statusBar: {
+                        backgroundColor: body.bg,
+                    },
+                });
             },
-            animated: false,
-        });
+            150,
+        );
     }
 
     render() {
-        const { theme, password, loginRoute, isFingerprintEnabled } = this.props;
+        const { theme, password, isFingerprintEnabled } = this.props;
+        const { nextLoginRoute } = this.state;
         const body = theme.body;
         return (
-            <View style={[styles.container, { backgroundColor: body.bg }]}>
-                <DynamicStatusBar backgroundColor={body.bg} />
-                {loginRoute === 'login' && (
+            <AnimatedComponent
+                animateOnMount={false}
+                animationInType={this.animationInType}
+                animationOutType={this.animationOutType}
+                animateInTrigger={this.state.nextLoginRoute}
+                animateOutTrigger={this.props.loginRoute}
+                duration={150}
+                style={[styles.container, { backgroundColor: body.bg }]}
+            >
+                {nextLoginRoute === 'login' && (
                     <EnterPasswordOnLoginComponent
                         theme={theme}
                         onLoginPress={this.onLoginPress}
@@ -204,16 +260,16 @@ class Login extends Component {
                         isFingerprintEnabled={isFingerprintEnabled}
                     />
                 )}
-                {loginRoute === 'complete2FA' && (
+                {nextLoginRoute === 'complete2FA' && (
                     <Enter2FAComponent
                         verify={this.onComplete2FA}
                         cancel={() => this.props.setLoginRoute('login')}
                         theme={theme}
                     />
                 )}
-                {loginRoute !== 'complete2FA' && loginRoute !== 'login' && <NodeOptionsOnLogin />}
-                <StatefulDropdownAlert backgroundColor={body.bg} />
-            </View>
+                {nextLoginRoute !== 'complete2FA' &&
+                    nextLoginRoute !== 'login' && <NodeOptionsOnLogin loginRoute={nextLoginRoute} />}
+            </AnimatedComponent>
         );
     }
 }
@@ -229,6 +285,7 @@ const mapStateToProps = (state) => ({
     loginRoute: state.ui.loginRoute,
     hasConnection: state.wallet.hasConnection,
     isFingerprintEnabled: state.settings.isFingerprintEnabled,
+    forceUpdate: state.wallet.forceUpdate,
 });
 
 const mapDispatchToProps = {
@@ -242,6 +299,4 @@ const mapDispatchToProps = {
     setLoginRoute,
 };
 
-export default WithBackPressCloseApp()(
-    withNamespaces(['login', 'global', 'twoFA'])(connect(mapStateToProps, mapDispatchToProps)(Login)),
-);
+export default withNamespaces(['login', 'global', 'twoFA'])(connect(mapStateToProps, mapDispatchToProps)(Login));

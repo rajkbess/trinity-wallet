@@ -13,7 +13,7 @@ import { generateAlert } from 'shared-modules/actions/alerts';
 import { setSetting } from 'shared-modules/actions/wallet';
 import { width, height } from 'libs/dimensions';
 import { Icon } from 'ui/theme/icons';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
 const styles = StyleSheet.create({
@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
     },
     titleText: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         marginLeft: width / 20,
     },
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
         textDecorationLine: 'line-through',
         marginRight: width / 100,
         fontFamily: 'SourceCodePro-Medium',
-        fontSize: GENERAL.fontSize2,
+        fontSize: Styling.fontSize2,
     },
     bottomContainer: {
         flex: 1,
@@ -51,13 +51,13 @@ const styles = StyleSheet.create({
     addressText: {
         backgroundColor: 'transparent',
         fontFamily: 'SourceCodePro-Medium',
-        fontSize: GENERAL.fontSize2,
+        fontSize: Styling.fontSize2,
         textDecorationStyle: 'solid',
     },
     balanceText: {
         backgroundColor: 'transparent',
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize2,
+        fontSize: Styling.fontSize2,
         textAlign: 'right',
     },
     listView: {
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     },
     noAddresses: {
         fontFamily: 'SourceSansPro-Light',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
     },
     flatList: {
@@ -112,14 +112,12 @@ export class ViewAddresses extends Component {
      */
     prepAddresses() {
         const { addresses } = this.props.selectedAccount;
-
         const preparedAddresses = map(addresses, (data, address) => ({
             ...data,
             balance: round(formatValue(data.balance), 1),
             unit: formatUnit(data.balance),
             address: `${address}${data.checksum}`,
         }));
-
         return orderBy(preparedAddresses, 'index', ['desc']);
     }
 
@@ -130,35 +128,32 @@ export class ViewAddresses extends Component {
      */
     copy(address) {
         const { t } = this.props;
-
         Clipboard.setString(address);
         return this.props.generateAlert('success', t('addressCopied'), t('addressCopiedExplanation'));
     }
 
     renderAddress(address) {
         const { theme } = this.props;
-
         const { spent } = address;
         const isSpent = spent.local || spent.remote;
 
         return (
-            <View style={{ flexDirection: 'row', paddingHorizontal: width / 15, height: height / 25 }}>
+            <View style={{ flexDirection: 'row', paddingHorizontal: width / 15, height: height / 19 }}>
                 <TouchableOpacity
                     onPress={() => this.copy(address.address)}
                     style={{ alignItems: 'flex-start', flex: 8, justifyContent: 'center' }}
                 >
-                    <View>
-                        <Text
-                            numberOfLines={2}
-                            style={[
-                                styles.addressText,
-                                { textDecorationLine: isSpent ? 'line-through' : 'none' },
-                                { color: isSpent ? '#B21C17' : theme.body.color },
-                            ]}
-                        >
-                            {address.address}
-                        </Text>
-                    </View>
+                    <Text
+                        style={[
+                            styles.addressText,
+                            { textDecorationLine: isSpent ? 'line-through' : 'none' },
+                            { color: isSpent ? '#B21C17' : theme.body.color },
+                        ]}
+                        ellipsizeMode="middle"
+                        numberOfLines={2}
+                    >
+                        {address.address}
+                    </Text>
                 </TouchableOpacity>
                 <View style={{ alignItems: 'flex-end', flex: 2, justifyContent: 'center' }}>
                     <Text style={[styles.balanceText, { color: theme.body.color }]}>
@@ -179,7 +174,7 @@ export class ViewAddresses extends Component {
                 contentContainerStyle={noAddresses ? styles.flatList : null}
                 data={addresses}
                 initialNumToRender={10} // TODO: Should be dynamically computed.
-                keyExtractor={(item, index) => index}
+                keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item }) => this.renderAddress(item)}
                 ItemSeparatorComponent={() => <View style={styles.separator} />}
                 ListEmptyComponent={

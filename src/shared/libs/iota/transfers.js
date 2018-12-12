@@ -133,8 +133,7 @@ export const findPromotableTail = (provider) => (tails, idx) => {
 
     return isPromotable(provider)(get(thisTail, 'hash'))
         .then((state) => {
-            // Temporarily allow transaction to promote even if consistency check fails
-            if (state || isAboveMaxDepth(get(thisTail, 'attachmentTimestamp'))) {
+            if (state === true && isAboveMaxDepth(get(thisTail, 'attachmentTimestamp'))) {
                 return thisTail;
             }
 
@@ -290,7 +289,7 @@ export const categoriseBundleByInputsOutputs = (bundle, addresses, outputsThresh
                 checksum: iota.utils.addChecksum(tx.address).slice(tx.address.length),
             };
 
-            if (tx.value < 0 && !isRemainder(tx)) {
+            if (tx.value < 0) {
                 acc.inputs.push(meta);
             } else {
                 acc.outputs.push(meta);

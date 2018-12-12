@@ -3,19 +3,19 @@ import React, { Component } from 'react';
 import { withNamespaces } from 'react-i18next';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import { navigator } from 'libs/navigation';
 import { resetWallet, setCompletedForcedPasswordUpdate } from 'shared-modules/actions/settings';
-import { setOnboardingComplete } from 'shared-modules/actions/accounts';
-import { clearWalletData, setPassword } from 'shared-modules/actions/wallet';
 import { generateAlert } from 'shared-modules/actions/alerts';
-import { StyleSheet, View, Keyboard, TouchableWithoutFeedback, BackHandler } from 'react-native';
-import OnboardingButtons from 'ui/components/OnboardingButtons';
-import { persistor } from 'libs/store';
-import DynamicStatusBar from 'ui/components/DynamicStatusBar';
+import { Text, StyleSheet, View, Keyboard, TouchableWithoutFeedback, BackHandler } from 'react-native';
+import DualFooterButtons from 'ui/components/DualFooterButtons';
+import AnimatedComponent from 'ui/components/AnimatedComponent';
+import { persistConfig } from 'libs/store';
+import { purgeStoredState } from 'shared-modules/store';
 import { clearKeychain, hash } from 'libs/keychain';
 import CustomTextInput from 'ui/components/CustomTextInput';
-import StatefulDropdownAlert from 'ui/components/StatefulDropdownAlert';
-import { Icon } from 'ui/theme/icons';
-import { width, height } from 'libs/dimensions';
+import InfoBox from 'ui/components/InfoBox';
+import Header from 'ui/components/Header';
+import { Styling } from 'ui/theme/general';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
 const styles = StyleSheet.create({
@@ -25,13 +25,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     topWrapper: {
-        flex: 0.5,
+        flex: 0.9,
         alignItems: 'center',
         justifyContent: 'flex-start',
-        paddingTop: height / 16,
     },
     midWrapper: {
-        flex: 3.7,
+        flex: 4.6,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -40,6 +39,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'flex-end',
     },
+    infoText: {
+        fontSize: Styling.fontSize3,
+        fontFamily: 'SourceSansPro-Light',
+        textAlign: 'center',
+        backgroundColor: 'transparent',
+    },
 });
 
 /**
@@ -47,24 +52,18 @@ const styles = StyleSheet.create({
  */
 class WalletResetRequirePassword extends Component {
     static propTypes = {
+        /** Component ID */
+        componentId: PropTypes.string.isRequired,
         /** @ignore */
         password: PropTypes.object.isRequired,
         /** @ignore */
         resetWallet: PropTypes.func.isRequired,
-        /** @ignore */
-        setOnboardingComplete: PropTypes.func.isRequired,
-        /** @ignore */
-        clearWalletData: PropTypes.func.isRequired,
-        /** @ignore */
-        setPassword: PropTypes.func.isRequired,
         /** @ignore */
         generateAlert: PropTypes.func.isRequired,
         /** @ignore */
         theme: PropTypes.object.isRequired,
         /** @ignore */
         t: PropTypes.func.isRequired,
-        /** Navigation object */
-        navigator: PropTypes.object.isRequired,
         /** @ignore */
         setCompletedForcedPasswordUpdate: PropTypes.func.isRequired,
     };
@@ -97,17 +96,7 @@ class WalletResetRequirePassword extends Component {
      * @method goBack
      */
     goBack() {
-        const { theme: { body } } = this.props;
-        this.props.navigator.pop({
-            navigatorStyle: {
-                navBarHidden: true,
-                navBarTransparent: true,
-                screenBackgroundColor: body.bg,
-                drawUnderStatusBar: true,
-                statusBarColor: body.bg,
-            },
-            animated: false,
-        });
+        navigator.pop(this.props.componentId);
     }
 
     /**
@@ -126,17 +115,18 @@ class WalletResetRequirePassword extends Component {
      */
     redirectToInitialScreen() {
         const { theme: { body } } = this.props;
-        this.props.navigator.resetTo({
-            screen: 'languageSetup',
-            navigatorStyle: {
-                navBarHidden: true,
-                navBarTransparent: true,
-                topBarElevationShadowEnabled: false,
-                screenBackgroundColor: body.bg,
-                drawUnderStatusBar: true,
-                statusBarColor: body.bg,
+        navigator.setStackRoot('languageSetup', {
+            animations: {
+                setStackRoot: {
+                    enable: false,
+                },
             },
-            animated: false,
+            layout: {
+                backgroundColor: body.bg,
+            },
+            statusBar: {
+                backgroundColor: body.bg,
+            },
         });
     }
 
@@ -148,13 +138,11 @@ class WalletResetRequirePassword extends Component {
         const { t } = this.props;
         if (await this.isAuthenticated()) {
             this.redirectToInitialScreen();
-            persistor
-                .purge()
+            purgeStoredState(persistConfig)
                 .then(() => clearKeychain())
                 .then(() => {
-                    this.props.setOnboardingComplete(false);
-                    this.props.clearWalletData();
-                    this.props.setPassword('');
+                    // resetWallet action creator resets the whole state object to default values
+                    // https://github.com/iotaledger/trinity-wallet/blob/develop/src/shared/store.js#L37
                     this.props.resetWallet();
                     // FIXME: Temporarily needed for password migration
                     this.props.setCompletedForcedPasswordUpdate();
@@ -181,38 +169,62 @@ class WalletResetRequirePassword extends Component {
 
         return (
             <View style={[styles.container, backgroundColor]}>
-                <DynamicStatusBar backgroundColor={theme.body.bg} />
                 <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                     <View>
                         <View style={styles.topWrapper}>
-                            <Icon name="iota" size={width / 8} color={theme.body.color} />
+                            <AnimatedComponent
+                                animationInType={['slideInRight', 'fadeIn']}
+                                animationOutType={['slideOutLeft', 'fadeOut']}
+                                delay={400}
+                            >
+                                <Header textColor={theme.body.color} />
+                            </AnimatedComponent>
                         </View>
                         <View style={styles.midWrapper}>
-                            <CustomTextInput
-                                label={t('global:password')}
-                                onChangeText={(password) => this.setState({ password })}
-                                value={this.state.password}
-                                containerStyle={{ width: width / 1.15 }}
-                                autoCapitalize="none"
-                                autoCorrect={false}
-                                enablesReturnKeyAutomatically
-                                returnKeyType="done"
-                                theme={theme}
-                                secureTextEntry
-                            />
-                            <View style={{ flex: 0.2 }} />
+                            <AnimatedComponent
+                                animationInType={['slideInRight', 'fadeIn']}
+                                animationOutType={['slideOutLeft', 'fadeOut']}
+                                delay={300}
+                            >
+                                <InfoBox>
+                                    <Text style={[styles.infoText, { color: theme.body.color }]}>
+                                        {t('enterPassword')}
+                                    </Text>
+                                </InfoBox>
+                            </AnimatedComponent>
+                            <View style={{ flex: 0.1 }} />
+                            <AnimatedComponent
+                                animationInType={['slideInRight', 'fadeIn']}
+                                animationOutType={['slideOutLeft', 'fadeOut']}
+                                delay={100}
+                            >
+                                <CustomTextInput
+                                    label={t('global:password')}
+                                    onChangeText={(password) => this.setState({ password })}
+                                    value={this.state.password}
+                                    containerStyle={{ width: Styling.contentWidth }}
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    enablesReturnKeyAutomatically
+                                    returnKeyType="done"
+                                    theme={theme}
+                                    secureTextEntry
+                                />
+                            </AnimatedComponent>
+                            <View style={{ flex: 0.1 }} />
                         </View>
                         <View style={styles.bottomContainer}>
-                            <OnboardingButtons
-                                onLeftButtonPress={this.goBack}
-                                onRightButtonPress={this.resetWallet}
-                                leftButtonText={t('global:cancel')}
-                                rightButtonText={t('reset')}
-                            />
+                            <AnimatedComponent animationInType={['fadeIn']} animationOutType={['fadeOut']} delay={0}>
+                                <DualFooterButtons
+                                    onLeftButtonPress={this.goBack}
+                                    onRightButtonPress={this.resetWallet}
+                                    leftButtonText={t('global:cancel')}
+                                    rightButtonText={t('reset')}
+                                />
+                            </AnimatedComponent>
                         </View>
                     </View>
                 </TouchableWithoutFeedback>
-                <StatefulDropdownAlert textColor={theme.body.color} backgroundColor={theme.body.bg} />
             </View>
         );
     }
@@ -225,9 +237,6 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = {
     resetWallet,
-    setOnboardingComplete,
-    clearWalletData,
-    setPassword,
     generateAlert,
     setCompletedForcedPasswordUpdate,
 };

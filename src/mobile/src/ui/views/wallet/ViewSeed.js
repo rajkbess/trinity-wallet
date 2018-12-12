@@ -6,7 +6,7 @@ import { withNamespaces } from 'react-i18next';
 import { View, Text, StyleSheet, TouchableOpacity, Keyboard, TouchableWithoutFeedback, AppState } from 'react-native';
 import { setSetting } from 'shared-modules/actions/wallet';
 import { generateAlert } from 'shared-modules/actions/alerts';
-import { getSelectedAccountName, getSelectedAccountType } from 'shared-modules/selectors/accounts';
+import { getSelectedAccountName, getSelectedAccountMeta } from 'shared-modules/selectors/accounts';
 import FlagSecure from 'react-native-flag-secure-android';
 import Fonts from 'ui/theme/fonts';
 import Seedbox from 'ui/components/SeedBox';
@@ -15,7 +15,7 @@ import SeedStore from 'libs/SeedStore';
 import { hash } from 'libs/keychain';
 import { width, height } from 'libs/dimensions';
 import { Icon } from 'ui/theme/icons';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import CtaButton from 'ui/components/CtaButton';
 import InfoBox from 'ui/components/InfoBox';
 import { isAndroid } from 'libs/device';
@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
     },
     generalText: {
         fontFamily: Fonts.secondary,
-        fontSize: GENERAL.fontSize4,
+        fontSize: Styling.fontSize4,
         textAlign: 'center',
         backgroundColor: 'transparent',
     },
@@ -76,25 +76,25 @@ const styles = StyleSheet.create({
     },
     titleText: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         marginLeft: width / 20,
     },
     infoText: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
-        textAlign: 'left',
+        fontSize: Styling.fontSize3,
+        textAlign: 'center',
         backgroundColor: 'transparent',
     },
     infoTextBold: {
         fontFamily: 'SourceSansPro-Bold',
-        fontSize: GENERAL.fontSize3,
-        textAlign: 'left',
+        fontSize: Styling.fontSize3,
+        textAlign: 'center',
         backgroundColor: 'transparent',
     },
     viewSeedButton: {
         borderWidth: 1.2,
-        borderRadius: GENERAL.borderRadius,
+        borderRadius: Styling.borderRadius,
         width: width / 2.7,
         height: height / 14,
         alignItems: 'center',
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     },
     viewSeedText: {
         fontFamily: 'SourceSansPro-Light',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
     },
 });
@@ -117,7 +117,7 @@ class ViewSeed extends Component {
         /** Name for selected account */
         selectedAccountName: PropTypes.string.isRequired,
         /** Type for selected account */
-        selectedAccountType: PropTypes.string.isRequired,
+        selectedAccountMeta: PropTypes.object.isRequired,
         /** @ignore */
         theme: PropTypes.object.isRequired,
         /** @ignore */
@@ -169,11 +169,11 @@ class ViewSeed extends Component {
      * @returns {Promise<void>}
      */
     async viewSeed() {
-        const { password, selectedAccountName, selectedAccountType, t } = this.props;
+        const { password, selectedAccountName, selectedAccountMeta, t } = this.props;
         const pwdHash = await hash(this.state.password);
 
         if (isEqual(password, pwdHash)) {
-            const seedStore = new SeedStore[selectedAccountType](pwdHash, selectedAccountName);
+            const seedStore = new SeedStore[selectedAccountMeta.type](pwdHash, selectedAccountName);
             const seed = await seedStore.getSeed();
 
             if (isAndroid) {
@@ -251,7 +251,7 @@ class ViewSeed extends Component {
                                     <CustomTextInput
                                         label={t('global:password')}
                                         onChangeText={(password) => this.setState({ password })}
-                                        containerStyle={{ width: width / 1.15 }}
+                                        containerStyle={{ width: Styling.contentWidth }}
                                         autoCapitalize="none"
                                         autoCorrect={false}
                                         enablesReturnKeyAutomatically
@@ -280,42 +280,27 @@ class ViewSeed extends Component {
                         {this.state.isConfirming &&
                             !this.state.showSeed && (
                                 <View>
-                                    <InfoBox
-                                        body={theme.body}
-                                        width={width / 1.1}
-                                        text={
-                                            <View style={{ alignItems: 'center' }}>
-                                                <Text style={[styles.infoText, textColor, { paddingTop: height / 30 }]}>
-                                                    <Text style={styles.infoText}>{t('global:masterKey')} </Text>
-                                                    <Text style={styles.infoText}>{t('walletSetup:seedThief')} </Text>
-                                                    <Text style={styles.infoTextBold}>
-                                                        {t('walletSetup:keepSafe')}{' '}
+                                    <InfoBox>
+                                        <Text style={[styles.infoText, textColor]}>
+                                            <Text style={styles.infoText}>{t('global:masterKey')} </Text>
+                                            <Text style={styles.infoText}>{t('walletSetup:seedThief')} </Text>
+                                            <Text style={styles.infoTextBold}>{t('walletSetup:keepSafe')} </Text>
+                                        </Text>
+                                        <View style={{ paddingTop: height / 20, alignItems: 'center' }}>
+                                            <TouchableOpacity onPress={() => this.setState({ isConfirming: false })}>
+                                                <View
+                                                    style={[
+                                                        styles.viewSeedButton,
+                                                        { borderColor: theme.primary.color },
+                                                    ]}
+                                                >
+                                                    <Text style={[styles.viewSeedText, { color: theme.primary.color }]}>
+                                                        {t('viewSeed:viewSeed').toUpperCase()}
                                                     </Text>
-                                                </Text>
-                                                <View style={{ paddingTop: height / 20, alignItems: 'center' }}>
-                                                    <TouchableOpacity
-                                                        onPress={() => this.setState({ isConfirming: false })}
-                                                    >
-                                                        <View
-                                                            style={[
-                                                                styles.viewSeedButton,
-                                                                { borderColor: theme.primary.color },
-                                                            ]}
-                                                        >
-                                                            <Text
-                                                                style={[
-                                                                    styles.viewSeedText,
-                                                                    { color: theme.primary.color },
-                                                                ]}
-                                                            >
-                                                                {t('viewSeed:viewSeed').toUpperCase()}
-                                                            </Text>
-                                                        </View>
-                                                    </TouchableOpacity>
                                                 </View>
-                                            </View>
-                                        }
-                                    />
+                                            </TouchableOpacity>
+                                        </View>
+                                    </InfoBox>
                                     <View style={{ flex: 0.1 }} />
                                 </View>
                             )}
@@ -356,7 +341,7 @@ const mapStateToProps = (state) => ({
     seedIndex: state.wallet.seedIndex,
     password: state.wallet.password,
     selectedAccountName: getSelectedAccountName(state),
-    selectedAccountType: getSelectedAccountType(state),
+    selectedAccountMeta: getSelectedAccountMeta(state),
     theme: state.settings.theme,
 });
 

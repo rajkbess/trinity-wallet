@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { withNamespaces } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
+import { navigator } from 'libs/navigation';
 import { setSetting } from 'shared-modules/actions/wallet';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 import { renderSettingsRows } from 'ui/components/SettingsContent';
@@ -26,8 +27,6 @@ class SecuritySettings extends Component {
         is2FAEnabled: PropTypes.bool.isRequired,
         /** @ignore */
         isFingerprintEnabled: PropTypes.bool.isRequired,
-        /** Navigation object */
-        navigator: PropTypes.object.isRequired,
     };
 
     componentDidMount() {
@@ -40,34 +39,22 @@ class SecuritySettings extends Component {
      */
     on2FASetupPress() {
         const { is2FAEnabled, theme: { body } } = this.props;
-
-        if (!is2FAEnabled) {
-            this.props.navigator.push({
-                screen: 'twoFactorSetupAddKey',
-                navigatorStyle: {
-                    navBarHidden: true,
-                    navBarTransparent: true,
-                    topBarElevationShadowEnabled: false,
-                    screenBackgroundColor: body.bg,
-                    drawUnderStatusBar: true,
-                    statusBarColor: body.bg,
+        navigator.push(is2FAEnabled ? 'disable2FA' : 'twoFactorSetupAddKey', {
+            animations: {
+                push: {
+                    enable: false,
                 },
-                animated: false,
-            });
-        } else {
-            this.props.navigator.push({
-                screen: 'disable2FA',
-                navigatorStyle: {
-                    navBarHidden: true,
-                    navBarTransparent: true,
-                    topBarElevationShadowEnabled: false,
-                    screenBackgroundColor: body.bg,
-                    drawUnderStatusBar: true,
-                    statusBarColor: body.bg,
+                pop: {
+                    enable: false,
                 },
-                animated: false,
-            });
-        }
+            },
+            layout: {
+                backgroundColor: body.bg,
+            },
+            statusBar: {
+                backgroundColor: body.bg,
+            },
+        });
     }
 
     /**
@@ -76,17 +63,21 @@ class SecuritySettings extends Component {
      */
     onFingerprintSetupPress() {
         const { theme: { body } } = this.props;
-        this.props.navigator.push({
-            screen: 'fingerprintSetup',
-            navigatorStyle: {
-                navBarHidden: true,
-                navBarTransparent: true,
-                topBarElevationShadowEnabled: false,
-                screenBackgroundColor: body.bg,
-                drawUnderStatusBar: true,
-                statusBarColor: body.bg,
+        navigator.push('fingerprintSetup', {
+            animations: {
+                push: {
+                    enable: false,
+                },
+                pop: {
+                    enable: false,
+                },
             },
-            animated: false,
+            layout: {
+                backgroundColor: body.bg,
+            },
+            statusBar: {
+                backgroundColor: body.bg,
+            },
         });
     }
 

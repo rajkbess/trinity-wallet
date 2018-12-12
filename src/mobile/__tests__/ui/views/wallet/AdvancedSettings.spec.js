@@ -15,6 +15,8 @@ jest.mock('rn-fetch-blob', () => {});
 
 jest.mock('rn-fetch-blob', () => {});
 
+jest.mock('react-native-share', () => {});
+
 const getProps = (overrides) =>
     assign(
         {},
@@ -25,7 +27,8 @@ const getProps = (overrides) =>
             node: 'https://foo.baz',
             theme: { body: {} },
             isSendingTransfer: false,
-            navigator: {},
+            autoPromotion: false,
+            remotePoW: false,
         },
         overrides,
     );
@@ -54,10 +57,6 @@ describe('Testing AdvancedSettings component', () => {
 
         it('should require a isSendingTransfer boolean as a prop', () => {
             expect(AdvancedSettings.propTypes.isSendingTransfer).toEqual(PropTypes.bool.isRequired);
-        });
-
-        it('should require a navigator object as a prop', () => {
-            expect(AdvancedSettings.propTypes.navigator).toEqual(PropTypes.object.isRequired);
         });
     });
 

@@ -3,16 +3,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withNamespaces } from 'react-i18next';
-import {
-    StyleSheet,
-    View,
-    Text,
-    TouchableWithoutFeedback,
-    TouchableOpacity,
-    Keyboard,
-    KeyboardAvoidingView,
-} from 'react-native';
+import { StyleSheet, View, Text, TouchableWithoutFeedback, TouchableOpacity, Keyboard } from 'react-native';
+import { navigator } from 'libs/navigation';
 import { connect } from 'react-redux';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { zxcvbn } from 'shared-modules/libs/exports';
 import { setPassword, setSetting } from 'shared-modules/actions/wallet';
 import { passwordReasons } from 'shared-modules/libs/password';
@@ -23,12 +17,11 @@ import SplashScreen from 'react-native-splash-screen';
 import { changePassword, authorize } from 'libs/keychain';
 import { generatePasswordHash, getSalt, getOldPasswordHash, hexToUint8 } from 'libs/crypto';
 import { width, height } from 'libs/dimensions';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import CustomTextInput from 'ui/components/CustomTextInput';
 import { Icon } from 'ui/theme/icons';
 import InfoBox from 'ui/components/InfoBox';
 import { isAndroid } from 'libs/device';
-import StatefulDropdownAlert from 'ui/components/StatefulDropdownAlert';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
 const styles = StyleSheet.create({
@@ -52,8 +45,8 @@ const styles = StyleSheet.create({
     },
     infoText: {
         fontFamily: 'SourceSansPro-Light',
-        fontSize: GENERAL.fontSize3,
-        textAlign: 'left',
+        fontSize: Styling.fontSize3,
+        textAlign: 'center',
         backgroundColor: 'transparent',
     },
     itemLeft: {
@@ -68,13 +61,13 @@ const styles = StyleSheet.create({
     },
     titleTextLeft: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         marginLeft: width / 20,
     },
     titleTextRight: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
         marginRight: width / 20,
     },
@@ -85,8 +78,6 @@ const styles = StyleSheet.create({
  */
 class ForceChangePassword extends Component {
     static propTypes = {
-        /** Navigation object */
-        navigator: PropTypes.object.isRequired,
         /** Hash for wallet's password */
         password: PropTypes.object.isRequired,
         /** @ignore */
@@ -176,17 +167,18 @@ class ForceChangePassword extends Component {
 
     navigateToLogin() {
         const { theme: { body } } = this.props;
-        this.props.navigator.resetTo({
-            screen: 'login',
-            navigatorStyle: {
-                navBarHidden: true,
-                navBarTransparent: true,
-                topBarElevationShadowEnabled: false,
-                screenBackgroundColor: body.bg,
-                drawUnderStatusBar: true,
-                statusBarColor: body.bg,
+        navigator.setStackRoot('login', {
+            animations: {
+                setStackRoot: {
+                    enable: false,
+                },
             },
-            animated: false,
+            layout: {
+                backgroundColor: body.bg,
+            },
+            statusBar: {
+                backgroundColor: body.bg,
+            },
         });
     }
 
@@ -206,7 +198,7 @@ class ForceChangePassword extends Component {
             onRef: ref,
             label,
             onChangeText,
-            containerStyle: { width: width / 1.15 },
+            containerStyle: { width: Styling.contentWidth },
             autoCapitalize: 'none',
             autoCorrect: false,
             enablesReturnKeyAutomatically: true,
@@ -250,23 +242,18 @@ class ForceChangePassword extends Component {
         const isValid = score.score === 4;
 
         return (
-            <View style={[styles.container, { backgroundColor: body.bg }]}>
+            <KeyboardAwareScrollView contentContainerStyle={[styles.container, { backgroundColor: body.bg }]}>
                 <TouchableWithoutFeedback onPress={Keyboard.dismiss} style={{ flex: 1, width }}>
                     <View style={styles.container}>
                         <View style={{ flex: 1.5 }} />
-                        <KeyboardAvoidingView behavior={isAndroid ? null : 'padding'} style={styles.topContainer}>
-                            <InfoBox
-                                body={body}
-                                text={
-                                    <View>
-                                        <Text style={[styles.infoText, textColor]}>
-                                            With update 0.5.0, it is necessary to change your password before using
-                                            Trinity. If your current password fulfils the password strength requirements
-                                            then you may use your current password again.
-                                        </Text>
-                                    </View>
-                                }
-                            />
+                        <View style={styles.topContainer}>
+                            <InfoBox>
+                                <Text style={[styles.infoText, textColor]}>
+                                    With update 0.5.0, it is necessary to change your password before using Trinity. If
+                                    your current password fulfils the password strength requirements then you may use
+                                    your current password again.
+                                </Text>
+                            </InfoBox>
                             <View style={{ flex: 0.2 }} />
                             {this.renderTextField(
                                 (c) => {
@@ -312,7 +299,7 @@ class ForceChangePassword extends Component {
                                 isValid && newPassword === newPasswordReentry,
                             )}
                             <View style={{ flex: 0.2 }} />
-                        </KeyboardAvoidingView>
+                        </View>
                         <View style={styles.bottomContainer}>
                             {currentPassword !== '' &&
                                 newPassword !== '' &&
@@ -336,8 +323,7 @@ class ForceChangePassword extends Component {
                         <View style={{ flex: 0.5 }} />
                     </View>
                 </TouchableWithoutFeedback>
-                <StatefulDropdownAlert textColor={body.color} backgroundColor={body.bg} />
-            </View>
+            </KeyboardAwareScrollView>
         );
     }
 }

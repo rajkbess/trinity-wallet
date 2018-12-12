@@ -3,18 +3,18 @@ import { withNamespaces } from 'react-i18next';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import authenticator from 'authenticator';
+import { StyleSheet, View, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { navigator } from 'libs/navigation';
 import { resetWallet, set2FAStatus } from 'shared-modules/actions/settings';
 import { generateAlert } from 'shared-modules/actions/alerts';
-import { StyleSheet, View, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { getTwoFactorAuthKeyFromKeychain } from 'libs/keychain';
-import DynamicStatusBar from 'ui/components/DynamicStatusBar';
 import Fonts from 'ui/theme/fonts';
 import CustomTextInput from 'ui/components/CustomTextInput';
-import OnboardingButtons from 'ui/components/OnboardingButtons';
-import StatefulDropdownAlert from 'ui/components/StatefulDropdownAlert';
-import { width, height } from 'libs/dimensions';
-import { Icon } from 'ui/theme/icons';
-import GENERAL from 'ui/theme/general';
+import DualFooterButtons from 'ui/components/DualFooterButtons';
+import AnimatedComponent from 'ui/components/AnimatedComponent';
+import Header from 'ui/components/Header';
+import { height } from 'libs/dimensions';
+import { Styling } from 'ui/theme/general';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
 const styles = StyleSheet.create({
@@ -24,10 +24,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     topWrapper: {
-        flex: 1.3,
+        flex: 1.6,
         alignItems: 'center',
         justifyContent: 'flex-start',
-        paddingTop: height / 16,
     },
     midWrapper: {
         flex: 1.6,
@@ -40,7 +39,7 @@ const styles = StyleSheet.create({
     },
     generalText: {
         fontFamily: Fonts.secondary,
-        fontSize: GENERAL.fontSize4,
+        fontSize: Styling.fontSize4,
         textAlign: 'center',
         paddingBottom: height / 10,
         backgroundColor: 'transparent',
@@ -50,6 +49,8 @@ const styles = StyleSheet.create({
 /** Disable Two Factor Authentication component */
 class Disable2FA extends Component {
     static propTypes = {
+        /** Component ID */
+        componentId: PropTypes.string.isRequired,
         /** @ignore */
         generateAlert: PropTypes.func.isRequired,
         /** @ignore */
@@ -60,17 +61,13 @@ class Disable2FA extends Component {
         set2FAStatus: PropTypes.func.isRequired,
         /** @ignore */
         password: PropTypes.object.isRequired,
-        /** Navigation object */
-        navigator: PropTypes.object.isRequired,
     };
 
     constructor() {
         super();
-
         this.state = {
             token: '',
         };
-
         this.goBack = this.goBack.bind(this);
         this.disable2FA = this.disable2FA.bind(this);
     }
@@ -88,7 +85,6 @@ class Disable2FA extends Component {
                 const verified = authenticator.verifyToken(key, this.state.token);
                 if (verified) {
                     this.props.set2FAStatus(false);
-
                     this.goBack();
                     this.timeout = setTimeout(() => {
                         this.props.generateAlert(
@@ -110,19 +106,7 @@ class Disable2FA extends Component {
      * @method goBack
      */
     goBack() {
-        const { theme: { bar, body } } = this.props;
-        this.props.navigator.resetTo({
-            screen: 'home',
-            navigatorStyle: {
-                navBarHidden: true,
-                navBarTransparent: true,
-                topBarElevationShadowEnabled: false,
-                screenBackgroundColor: body.bg,
-                drawUnderStatusBar: true,
-                statusBarColor: bar.alt,
-            },
-            animated: false,
-        });
+        navigator.pop(this.props.componentId);
     }
 
     render() {
@@ -132,38 +116,55 @@ class Disable2FA extends Component {
 
         return (
             <View style={[styles.container, backgroundColor]}>
-                <DynamicStatusBar backgroundColor={theme.body.bg} />
                 <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                     <View>
                         <View style={styles.topWrapper}>
-                            <Icon name="iota" size={width / 8} color={theme.body.color} />
+                            <AnimatedComponent
+                                animationInType={['slideInRight', 'fadeIn']}
+                                animationOutType={['slideOutLeft', 'fadeOut']}
+                                delay={400}
+                            >
+                                <Header textColor={theme.body.color} />
+                            </AnimatedComponent>
                         </View>
                         <View style={styles.midWrapper}>
-                            <Text style={[styles.generalText, textColor]}>Enter your token to disable 2FA</Text>
-                            <CustomTextInput
-                                label="Token"
-                                onChangeText={(token) => this.setState({ token })}
-                                containerStyle={{ width: width / 1.15 }}
-                                autoCapitalize="none"
-                                autoCorrect={false}
-                                enablesReturnKeyAutomatically
-                                returnKeyType="done"
-                                value={this.state.token}
-                                keyboardType="numeric"
-                                theme={theme}
-                            />
+                            <AnimatedComponent
+                                animationInType={['slideInRight', 'fadeIn']}
+                                animationOutType={['slideOutLeft', 'fadeOut']}
+                                delay={266}
+                            >
+                                <Text style={[styles.generalText, textColor]}>Enter your token to disable 2FA</Text>
+                            </AnimatedComponent>
+                            <AnimatedComponent
+                                animationInType={['slideInRight', 'fadeIn']}
+                                animationOutType={['slideOutLeft', 'fadeOut']}
+                                delay={133}
+                            >
+                                <CustomTextInput
+                                    label="Token"
+                                    onChangeText={(token) => this.setState({ token })}
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    enablesReturnKeyAutomatically
+                                    returnKeyType="done"
+                                    value={this.state.token}
+                                    keyboardType="numeric"
+                                    theme={theme}
+                                />
+                            </AnimatedComponent>
                         </View>
                         <View style={styles.bottomContainer}>
-                            <OnboardingButtons
-                                onLeftButtonPress={this.goBack}
-                                onRightButtonPress={this.disable2FA}
-                                leftButtonText={t('global:cancel')}
-                                rightButtonText={t('done')}
-                            />
+                            <AnimatedComponent animationInType={['fadeIn']} animationOutType={['fadeOut']} delay={0}>
+                                <DualFooterButtons
+                                    onLeftButtonPress={this.goBack}
+                                    onRightButtonPress={this.disable2FA}
+                                    leftButtonText={t('global:cancel')}
+                                    rightButtonText={t('done')}
+                                />
+                            </AnimatedComponent>
                         </View>
                     </View>
                 </TouchableWithoutFeedback>
-                <StatefulDropdownAlert textColor={theme.body.color} backgroundColor={theme.body.bg} />
             </View>
         );
     }

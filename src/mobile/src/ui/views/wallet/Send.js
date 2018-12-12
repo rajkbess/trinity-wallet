@@ -1,6 +1,4 @@
 import size from 'lodash/size';
-import map from 'lodash/map';
-import reduce from 'lodash/reduce';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withNamespaces } from 'react-i18next';
@@ -16,7 +14,7 @@ import {
     ADDRESS_LENGTH,
 } from 'shared-modules/libs/iota/utils';
 import { setDeepLinkInactive } from 'shared-modules/actions/wallet';
-import { getCurrencySymbol, getNextDenomination, getIOTAUnitMultiplier } from 'shared-modules/libs/currency';
+import { getCurrencySymbol, getIOTAUnitMultiplier } from 'shared-modules/libs/currency';
 import { getFromKeychainRequest, getFromKeychainSuccess, getFromKeychainError } from 'shared-modules/actions/keychain';
 import { makeTransaction } from 'shared-modules/actions/transfers';
 import {
@@ -32,30 +30,23 @@ import {
     getBalanceForSelectedAccount,
     getAvailableBalanceForSelectedAccount,
     getSelectedAccountName,
-    getSelectedAccountType,
+    getSelectedAccountMeta,
 } from 'shared-modules/selectors/accounts';
 import { startTrackingProgress } from 'shared-modules/actions/progress';
 import { generateAlert, generateTransferErrorAlert } from 'shared-modules/actions/alerts';
 import FingerprintScanner from 'react-native-fingerprint-scanner';
-import Modal from 'react-native-modal';
 import KeepAwake from 'react-native-keep-awake';
-import QRScannerComponent from 'ui/components/QrScanner';
 import Toggle from 'ui/components/Toggle';
-import FingerPrintModal from 'ui/components/FingerprintModal';
 import ProgressBar from 'ui/components/ProgressBar';
 import ProgressSteps from 'libs/progressSteps';
 import SeedStore from 'libs/SeedStore';
-import TransferConfirmationModal from 'ui/components/TransferConfirmationModal';
-import UsedAddressModal from 'ui/components/UsedAddressModal';
-import UnitInfoModal from 'ui/components/UnitInfoModal';
 import CustomTextInput from 'ui/components/CustomTextInput';
 import AmountTextInput from 'ui/components/AmountTextInput';
-import CtaButton from 'ui/components/CtaButton';
 import { Icon } from 'ui/theme/icons';
-import { height, width } from 'libs/dimensions';
+import { width } from 'libs/dimensions';
 import { isAndroid } from 'libs/device';
 import { getPowFn } from 'libs/nativeModules';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
 const styles = StyleSheet.create({
@@ -74,20 +65,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     maxContainer: {
-        justifyContent: 'flex-start',
+        justifyContent: 'center',
         alignItems: 'flex-end',
-        width: width / 1.15,
+        width: Styling.contentWidth,
         paddingRight: 1,
     },
     maxButtonText: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize2,
+        fontSize: Styling.fontSize2,
         backgroundColor: 'transparent',
         marginRight: width / 50,
     },
     infoText: {
         fontFamily: 'SourceSansPro-Regular',
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         textAlign: 'center',
         backgroundColor: 'transparent',
     },
@@ -95,9 +86,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-    },
-    progressSummaryText: {
-        fontSize: GENERAL.fontSize2,
     },
 });
 
@@ -118,13 +106,11 @@ export class Send extends Component {
         /** Name for selected account */
         selectedAccountName: PropTypes.string.isRequired,
         /** Name for selected account */
-        selectedAccountType: PropTypes.string.isRequired,
+        selectedAccountMeta: PropTypes.object.isRequired,
         /** @ignore */
         conversionRate: PropTypes.number.isRequired,
         /** @ignore */
         usdPrice: PropTypes.number.isRequired,
-        /** @ignore */
-        isGettingSensitiveInfoToMakeTransaction: PropTypes.bool.isRequired,
         /** @ignore */
         makeTransaction: PropTypes.func.isRequired,
         /** @ignore */
@@ -139,12 +125,6 @@ export class Send extends Component {
         closeTopBar: PropTypes.func.isRequired,
         /** @ignore */
         theme: PropTypes.object.isRequired,
-        /** @ignore */
-        bar: PropTypes.object.isRequired,
-        /** @ignore */
-        body: PropTypes.object.isRequired,
-        /** @ignore */
-        primary: PropTypes.object.isRequired,
         /** @ignore */
         isSendingTransfer: PropTypes.bool.isRequired,
         /** @ignore */
@@ -172,8 +152,6 @@ export class Send extends Component {
         /** @ignore */
         activeSteps: PropTypes.array.isRequired,
         /** @ignore */
-        timeTakenByEachProgressStep: PropTypes.array.isRequired,
-        /** @ignore */
         password: PropTypes.object.isRequired,
         /** @ignore */
         generateTransferErrorAlert: PropTypes.func.isRequired,
@@ -189,15 +167,11 @@ export class Send extends Component {
         isKeyboardActive: PropTypes.bool.isRequired,
         /** @ignore */
         toggleModalActivity: PropTypes.func.isRequired,
-        /** @ignore */
-        isModalActive: PropTypes.bool.isRequired,
     };
 
     constructor(props) {
         super(props);
-
-        const { t, body } = this.props;
-
+        const { t, theme: { body } } = this.props;
         this.state = {
             modalContent: '', // eslint-disable-line react/no-unused-state
             maxPressed: false,
@@ -205,27 +179,22 @@ export class Send extends Component {
             maxText: t('send:sendMax'),
             sending: false,
             currencySymbol: getCurrencySymbol(this.props.currency),
+            shouldInteruptSendAnimation: false,
         };
         this.detectAddressInClipboard = this.detectAddressInClipboard.bind(this);
     }
 
     componentWillMount() {
-        const { t, availableBalance, amount, primary } = this.props;
+        const { availableBalance, amount } = this.props;
         const amountAsNumber = parseFloat(amount);
-
         if (amountAsNumber === availableBalance / this.getUnitMultiplier() && amountAsNumber !== 0) {
-            this.setState({
-                maxPressed: true,
-                maxColor: primary.color,
-                maxText: t('send:maximumSelected'),
-            });
+            this.setMaxPressed();
         }
     }
 
     componentDidMount() {
         leaveNavigationBreadcrumb('Send');
         const { t, deepLinkActive } = this.props;
-
         if (deepLinkActive) {
             this.props.generateAlert('success', t('deepLink:autofill'), t('deepLink:autofillExplanation'));
             this.props.setDeepLinkInactive();
@@ -233,41 +202,37 @@ export class Send extends Component {
     }
 
     componentWillReceiveProps(newProps) {
-        const { seedIndex, isSendingTransfer } = this.props;
-
+        const { seedIndex, isSendingTransfer, address } = this.props;
         if (!isSendingTransfer && newProps.isSendingTransfer) {
             KeepAwake.activate();
         } else if (isSendingTransfer && !newProps.isSendingTransfer) {
             KeepAwake.deactivate();
             this.setState({ sending: false });
-            // Reset toggle switch in case send max is active
-            this.resetToggleSwitch();
+            this.resetMaxPressed();
+            this.interuptSendAnimation();
         }
-
         if (seedIndex !== newProps.seedIndex) {
-            this.resetToggleSwitch();
+            this.resetMaxPressed();
+        }
+        if (address.length === 0 && newProps.address.length === 90) {
+            this.detectAddressInClipboard();
         }
     }
 
     shouldComponentUpdate(newProps) {
         const { isSyncing, isTransitioning, usdPrice, conversionRate } = this.props;
-
         if (isSyncing !== newProps.isSyncing) {
             return false;
         }
-
         if (isTransitioning !== newProps.isTransitioning) {
             return false;
         }
-
         if (usdPrice !== newProps.usdPrice) {
             return false;
         }
-
         if (conversionRate !== newProps.conversionRate) {
             return false;
         }
-
         return true;
     }
 
@@ -280,20 +245,9 @@ export class Send extends Component {
         timer.clearTimeout('delaySend');
     }
 
-    onDenominationPress() {
-        const { t, currency, denomination, theme: { body } } = this.props;
-        const nextDenomination = getNextDenomination(currency, denomination);
-        this.props.setSendDenomination(nextDenomination);
-        this.setState({
-            maxPressed: false,
-            maxColor: body.color,
-            maxText: t('send:sendMax'),
-        });
-    }
-
     onMaxPress() {
         const { sending, maxPressed } = this.state;
-        const { t, body, primary, availableBalance } = this.props;
+        const { availableBalance } = this.props;
         const max = (availableBalance / this.getUnitMultiplier()).toString();
 
         if (sending) {
@@ -304,34 +258,22 @@ export class Send extends Component {
         }
         if (maxPressed) {
             this.props.setSendAmountField('');
-            this.setState({
-                maxPressed: false,
-                maxColor: body.color,
-                maxText: t('send:sendMax'),
-            });
+            this.resetMaxPressed();
         } else {
             this.props.setSendAmountField(max);
-            this.setState({
-                maxPressed: true,
-                maxColor: primary.color,
-                maxText: t('send:maximumSelected'),
-            });
+            this.setMaxPressed();
         }
     }
 
     onAmountType(amount) {
-        const { t, body, availableBalance } = this.props;
+        const { availableBalance } = this.props;
         amount = amount.replace(/,/g, '.');
         this.props.setSendAmountField(amount);
 
         if (amount === (availableBalance / this.getUnitMultiplier()).toString()) {
             this.onMaxPress();
         } else {
-            this.setState({
-                maxPressed: false,
-                maxColor: body.color,
-                maxText: t('send:sendMax'),
-            });
+            this.resetMaxPressed();
         }
     }
 
@@ -342,9 +284,8 @@ export class Send extends Component {
      * @returns {function}
      */
     onSendPress() {
-        const { t, amount, address, message, denomination, isKeyboardActive } = this.props;
+        const { t, amount, address, message, denomination } = this.props;
         const { currencySymbol } = this.state;
-
         const multiplier = this.getUnitMultiplier();
         const isFiat = denomination === currencySymbol;
         const addressIsValid = isValidAddress(address);
@@ -352,34 +293,26 @@ export class Send extends Component {
         const enoughBalance = this.enoughBalance();
         // const isSpendingFundsAtSpentAddresses = this.isSpendingFundsAtSpentAddresses();
         const messageIsValid = isValidMessage(message);
-
         if (!addressIsValid) {
+            this.interuptSendAnimation();
             return this.getInvalidAddressError(address);
         }
-
         if (!amountIsValid) {
+            this.interuptSendAnimation();
             return this.props.generateAlert('error', t('invalidAmount'), t('invalidAmountExplanation'));
         }
-
         if (!enoughBalance) {
+            this.interuptSendAnimation();
             return this.props.generateAlert('error', t('notEnoughFunds'), t('notEnoughFundsExplanation'));
         }
-
         /*if (isSpendingFundsAtSpentAddresses) {
             return this.openModal('usedAddress');
         }*/
-
         if (!messageIsValid) {
+            this.interuptSendAnimation();
             return this.props.generateAlert('error', t('invalidMessage'), t('invalidMessageExplanation'));
         }
         this.showModal('transferConfirmation');
-        if (parseFloat(amount) * multiplier > 0) {
-            timer.setTimeout(
-                'addressPasteAlertDelay',
-                () => this.detectAddressInClipboard(),
-                isKeyboardActive ? 1000 : 250,
-            );
-        }
     }
 
     onQRRead(data) {
@@ -388,10 +321,8 @@ export class Send extends Component {
         const parsedData = parse(data);
         const dataSubstring = data.substring(5);
         this.hideModal();
-
         // Clear clipboard
         Clipboard.setString(' ');
-
         if (parsedData.address) {
             // For codes containing JSON (iotaledger and Trinity)
             this.props.setSendAddressField(parsedData.address);
@@ -429,25 +360,6 @@ export class Send extends Component {
         return this.props.generateAlert(...props, t('invalidAddressExplanation3'));
     }
 
-    getModalProps() {
-        const { isModalActive, body } = this.props;
-        const props = {
-            animationIn: isAndroid ? 'bounceInUp' : 'zoomIn',
-            animationOut: isAndroid ? 'bounceOut' : 'zoomOut',
-            animationInTiming: isAndroid ? 1000 : 300,
-            animationOutTiming: 200,
-            backdropTransitionInTiming: isAndroid ? 500 : 300,
-            backdropTransitionOutTiming: 200,
-            backdropColor: body.bg,
-            style: { justifyContent: 'center', alignItems: 'center', margin: 0, height, width },
-            isVisible: isModalActive,
-            onBackButtonPress: () => this.props.toggleModalActivity(),
-            hideModalContentWhileAnimating: true,
-            useNativeDriver: isAndroid ? true : false,
-        };
-        return props;
-    }
-
     /**
      *   Gets multiplier used in converting IOTA denominations (Ti, Gi, Mi, Ki, i) and fiat to basic IOTA unit (i)
      *   @method getUnitMultiplier
@@ -475,23 +387,13 @@ export class Send extends Component {
         return 1;
     }
 
-    getProgressSummary() {
-        const { timeTakenByEachProgressStep } = this.props;
-        const totalTimeTaken = reduce(timeTakenByEachProgressStep, (acc, time) => acc + Number(time), 0);
-
-        return (
-            <Text>
-                <Text style={styles.progressSummaryText}>
-                    {map(timeTakenByEachProgressStep, (time, index) => {
-                        if (index === size(timeTakenByEachProgressStep) - 1) {
-                            return `${time} = ${totalTimeTaken.toFixed(1)} s`;
-                        }
-
-                        return `${time} + `;
-                    })}
-                </Text>
-            </Text>
-        );
+    getProgressBarText() {
+        const { t, activeStepIndex, activeSteps } = this.props;
+        const totalSteps = size(activeSteps);
+        if (activeStepIndex === totalSteps) {
+            return t('progressSteps:transferComplete');
+        }
+        return activeSteps[activeStepIndex] ? activeSteps[activeStepIndex] : '';
     }
 
     getConversionTextIOTA() {
@@ -511,6 +413,36 @@ export class Send extends Component {
     }
 
     /**
+     *   Turns on send max toggle
+     *   @method setMaxPressed
+     **/
+    setMaxPressed() {
+        const { theme: { primary }, t } = this.props;
+        this.setState({
+            maxPressed: true,
+            maxColor: primary.color,
+            maxText: t('send:maximumSelected'),
+        });
+    }
+
+    interuptSendAnimation() {
+        this.setState({ shouldInteruptSendAnimation: !this.state.shouldInteruptSendAnimation });
+    }
+
+    /**
+     *   Turns off send max toggle
+     *   @method resetMaxPressed
+     **/
+    resetMaxPressed() {
+        const { theme: { body }, t } = this.props;
+        this.setState({
+            maxPressed: false,
+            maxColor: body.color,
+            maxText: t('send:sendMax'),
+        });
+    }
+
+    /**
      * Generates an alert if address paste is detected
      *
      * @method detectAddressInClipboard
@@ -524,38 +456,92 @@ export class Send extends Component {
         }
     }
 
-    resetToggleSwitch() {
-        const { maxPressed } = this.state;
-        const { t } = this.props;
-
-        if (maxPressed) {
-            this.setState({
-                maxPressed: !maxPressed,
-                maxText: t('send:sendMax'),
-            });
-        }
-    }
-
     clearInteractions() {
         this.props.closeTopBar();
         Keyboard.dismiss();
     }
 
+    /**
+     * Shows specific modal
+     *
+     * @method showModal
+     * @param  {String} modalContent
+     */
     showModal(modalContent) {
-        this.setState({ modalContent });
-        this.openModal();
+        const {
+            theme,
+            theme: { bar, body },
+            address,
+            amount,
+            selectedAccountName,
+            isFingerprintEnabled,
+            message,
+        } = this.props;
+        switch (modalContent) {
+            case 'qrScanner':
+                return this.props.toggleModalActivity(modalContent, {
+                    onQRRead: (data) => this.onQRRead(data),
+                    hideModal: () => this.hideModal(),
+                    theme,
+                    onMount: () => this.props.setDoNotMinimise(true),
+                    onUnmount: () => this.props.setDoNotMinimise(false),
+                    displayTopBar: true,
+                });
+            case 'transferConfirmation':
+                return this.props.toggleModalActivity(modalContent, {
+                    value: parseFloat(amount) * this.getUnitMultiplier(),
+                    amount,
+                    conversionText: this.getConversionTextIOTA(),
+                    address: address,
+                    sendTransfer: () => this.sendWithDelay(),
+                    cancel: () => {
+                        this.interuptSendAnimation();
+                        this.hideModal();
+                    },
+                    hideModal: (callback) => this.hideModal(callback),
+                    setSendingTransferFlag: () => this.setSendingTransferFlag(),
+                    selectedAccountName,
+                    activateFingerprintScanner: () => this.activateFingerprintScanner(),
+                    isFingerprintEnabled,
+                    theme,
+                    message,
+                });
+            case 'unitInfo':
+                return this.props.toggleModalActivity(modalContent, {
+                    hideModal: () => this.hideModal(),
+                    textColor: { color: bar.color },
+                    lineColor: { borderBottomColor: bar.color },
+                    borderColor: { borderColor: bar.color },
+                    theme,
+                });
+            case 'usedAddress':
+                return this.props.toggleModalActivity(modalContent, {
+                    hideModal: (callback) => this.hideModal(callback),
+                    body,
+                    bar,
+                    borderColor: { borderColor: body.color },
+                    textColor: { color: body.color },
+                });
+            case 'fingerprint':
+                return this.props.toggleModalActivity(modalContent, {
+                    hideModal: this.hideModal,
+                    borderColor: { borderColor: body.color },
+                    textColor: { color: body.color },
+                    backgroundColor: { backgroundColor: body.bg },
+                    instance: 'send',
+                    theme,
+                    isFingerprintEnabled,
+                });
+            default:
+                break;
+        }
     }
 
-    openModal = () => {
-        const { isKeyboardActive } = this.props;
-        if (isKeyboardActive) {
-            this.blurTextFields();
-            timer.setTimeout('modalShow', () => this.props.toggleModalActivity(), 500);
-        } else {
-            this.props.toggleModalActivity();
-        }
-    };
-
+    /**
+     * Hides modal
+     *
+     * @method hideModal
+     */
     hideModal = () => {
         this.props.toggleModalActivity();
     };
@@ -607,7 +593,7 @@ export class Send extends Component {
             t,
             password,
             selectedAccountName,
-            selectedAccountType,
+            selectedAccountMeta,
             isSyncing,
             isTransitioning,
             message,
@@ -640,11 +626,9 @@ export class Send extends Component {
         this.props.getFromKeychainRequest('send', 'makeTransaction');
 
         try {
-            const seedStore = new SeedStore[selectedAccountType](password, selectedAccountName);
+            const seedStore = new SeedStore[selectedAccountMeta.type](password, selectedAccountName);
             this.props.getFromKeychainSuccess('send', 'makeTransaction');
-
             const powFn = getPowFn();
-
             return this.props.makeTransaction(seedStore, address, value, message, selectedAccountName, powFn);
         } catch (error) {
             this.props.getFromKeychainError('send', 'makeTransaction');
@@ -664,7 +648,8 @@ export class Send extends Component {
     activateFingerprintScanner() {
         const { t } = this.props;
         if (isAndroid) {
-            this.setState({ modalContent: 'fingerPrintModal' });
+            this.props.toggleModalActivity();
+            this.showModal('fingerprint');
         }
         FingerprintScanner.authenticate({ description: t('fingerprintOnSend') })
             .then(() => {
@@ -696,110 +681,17 @@ export class Send extends Component {
         this.messageField.blur();
     }
 
-    renderProgressBarChildren() {
-        const { activeStepIndex, activeSteps } = this.props;
-        const totalSteps = size(activeSteps);
-
-        if (activeStepIndex === totalSteps) {
-            return this.getProgressSummary();
-        }
-
-        return activeSteps[activeStepIndex] ? activeSteps[activeStepIndex] : null;
-    }
-
-    renderModal() {
-        const { bar, body, primary, address, amount, selectedAccountName, isFingerprintEnabled } = this.props;
-        const { modalContent } = this.state;
-        const modalProps = this.getModalProps();
-        switch (modalContent) {
-            case 'qrScanner':
-                return (
-                    <Modal {...modalProps}>
-                        <QRScannerComponent
-                            onQRRead={(data) => this.onQRRead(data)}
-                            hideModal={() => this.hideModal()}
-                            primary={primary}
-                            body={body}
-                            onMount={() => this.props.setDoNotMinimise(true)}
-                            onUnmount={() => this.props.setDoNotMinimise(false)}
-                        />
-                    </Modal>
-                );
-            case 'transferConfirmation':
-                return (
-                    <Modal {...modalProps}>
-                        <TransferConfirmationModal
-                            value={parseFloat(amount) * this.getUnitMultiplier()}
-                            amount={amount}
-                            conversionText={this.getConversionTextIOTA()}
-                            address={address}
-                            sendTransfer={() => this.sendWithDelay()}
-                            hideModal={(callback) => this.hideModal(callback)}
-                            body={body}
-                            bar={bar}
-                            borderColor={{ borderColor: body.color }}
-                            textColor={{ color: body.color }}
-                            setSendingTransferFlag={() => this.setSendingTransferFlag()}
-                            selectedAccountName={selectedAccountName}
-                            activateFingerprintScanner={() => this.activateFingerprintScanner()}
-                            isFingerprintEnabled={isFingerprintEnabled}
-                        />
-                    </Modal>
-                );
-            case 'unitInfo':
-                return (
-                    <Modal {...modalProps}>
-                        <UnitInfoModal
-                            hideModal={() => this.hideModal()}
-                            textColor={{ color: bar.color }}
-                            lineColor={{ borderLeftColor: bar.color }}
-                            borderColor={{ borderColor: bar.color }}
-                            bar={bar}
-                        />
-                    </Modal>
-                );
-            case 'usedAddress':
-                return (
-                    <Modal {...modalProps}>
-                        <UsedAddressModal
-                            hideModal={(callback) => this.hideModal(callback)}
-                            body={body}
-                            bar={bar}
-                            borderColor={{ borderColor: body.color }}
-                            textColor={{ color: body.color }}
-                        />
-                    </Modal>
-                );
-            case 'fingerPrintModal':
-                return (
-                    <Modal {...modalProps}>
-                        <FingerPrintModal
-                            hideModal={this.hideModal}
-                            borderColor={{ borderColor: body.color }}
-                            textColor={{ color: body.color }}
-                            backgroundColor={{ backgroundColor: body.bg }}
-                            instance="send"
-                        />
-                    </Modal>
-                );
-            default:
-                break;
-        }
-    }
-
     render() {
         const { maxPressed, maxColor, maxText, sending } = this.state;
         const {
             t,
             isSendingTransfer,
-            isGettingSensitiveInfoToMakeTransaction,
             address,
             amount,
             message,
             denomination,
             theme,
-            body,
-            primary,
+            theme: { body, primary, input, dark, secondary },
             isKeyboardActive,
         } = this.props;
         const textColor = { color: body.color };
@@ -822,7 +714,6 @@ export class Send extends Component {
                                     this.props.setSendAddressField(text);
                                 }
                             }}
-                            containerStyle={{ width: width / 1.15 }}
                             autoCapitalize="characters"
                             autoCorrect={false}
                             enablesReturnKeyAutomatically
@@ -842,7 +733,6 @@ export class Send extends Component {
                             value={address}
                             editable={!isSending}
                             selectTextOnFocus={!isSending}
-                            detectAddressInClipboard={this.detectAddressInClipboard}
                         />
                         <View style={{ flex: 0.17 }} />
                         <AmountTextInput
@@ -852,8 +742,10 @@ export class Send extends Component {
                             multiplier={this.getUnitMultiplier()}
                             editable={!isSending}
                             setAmount={(text) => this.props.setSendAmountField(text)}
-                            setDenomination={(text) => this.props.setSendDenomination(text)}
-                            containerStyle={{ width: width / 1.15 }}
+                            setDenomination={(text) => {
+                                this.props.setSendDenomination(text);
+                                this.resetMaxPressed();
+                            }}
                             onRef={(c) => {
                                 this.amountField = c;
                             }}
@@ -867,7 +759,7 @@ export class Send extends Component {
                         <View
                             style={[
                                 styles.maxContainer,
-                                { opacity: opacity, flex: isAndroid ? (isKeyboardActive ? 0.8 : 0.4) : 0.4 },
+                                { opacity: opacity, flex: isAndroid ? (isKeyboardActive ? 0.8 : 0.25) : 0.25 },
                             ]}
                         >
                             <TouchableOpacity
@@ -894,7 +786,7 @@ export class Send extends Component {
                                 </View>
                             </TouchableOpacity>
                         </View>
-                        <View style={{ flex: 0.1 }} />
+                        <View style={{ flex: 0.03 }} />
                         <CustomTextInput
                             onRef={(c) => {
                                 this.messageField = c;
@@ -902,56 +794,49 @@ export class Send extends Component {
                             keyboardType="default"
                             label={t('message')}
                             onChangeText={(text) => this.props.setSendMessageField(text)}
-                            containerStyle={{ width: width / 1.15 }}
                             autoCorrect={false}
                             enablesReturnKeyAutomatically
-                            returnKeyType="send"
+                            returnKeyType="done"
                             blurOnSubmit
-                            onSubmitEditing={() => this.onSendPress()}
+                            onSubmitEditing={() => Keyboard.dismiss()}
                             theme={theme}
                             value={message}
                             editable={!isSending}
                             selectTextOnFocus={!isSending}
                             multiplier={this.getUnitMultiplier()}
                         />
+                        <View style={{ flex: 0.1 }} />
                     </View>
                     <View style={styles.bottomContainer}>
                         <View style={{ flex: 0.25 }} />
-                        {!isSendingTransfer &&
-                            !isGettingSensitiveInfoToMakeTransaction && (
-                                <View style={{ flex: 1 }}>
-                                    <CtaButton
-                                        ctaColor={primary.color}
-                                        secondaryCtaColor={primary.body}
-                                        text={t('send')}
-                                        onPress={() => {
-                                            this.onSendPress();
-                                            if (address === '' && amount === '' && message && '') {
-                                                this.blurTextFields();
-                                            }
-                                        }}
-                                    />
-                                </View>
-                            )}
-                        {(isGettingSensitiveInfoToMakeTransaction || isSendingTransfer) && (
-                            <View
-                                style={{
-                                    flex: 1,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
+                        <View
+                            style={{
+                                flex: 1,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <ProgressBar
+                                activeStepIndex={this.props.activeStepIndex}
+                                totalSteps={size(this.props.activeSteps)}
+                                filledColor={input.bg}
+                                unfilledColor={dark.color}
+                                textColor={body.color}
+                                preSwipeColor={secondary.color}
+                                postSwipeColor={primary.color}
+                                interupt={this.state.shouldInteruptSendAnimation}
+                                progressText={this.getProgressBarText()}
+                                staticText={t('swipeToSend')}
+                                onSwipeSuccess={() => {
+                                    this.onSendPress();
+                                    if (address === '' && amount === '' && message && '') {
+                                        this.blurTextFields();
+                                    }
                                 }}
-                            >
-                                <ProgressBar
-                                    indeterminate={this.props.activeStepIndex === -1}
-                                    progress={this.props.activeStepIndex / size(this.props.activeSteps)}
-                                    color={primary.color}
-                                    textColor={body.color}
-                                >
-                                    {this.renderProgressBarChildren()}
-                                </ProgressBar>
-                            </View>
-                        )}
+                            />
+                        </View>
                         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                            <View style={{ flex: 0.33 }} />
                             <TouchableOpacity
                                 onPress={() => this.showModal('unitInfo')}
                                 hitSlop={{ top: width / 30, bottom: width / 30, left: width / 30, right: width / 30 }}
@@ -969,7 +854,6 @@ export class Send extends Component {
                         </View>
                         <View style={{ flex: 0.3 }} />
                     </View>
-                    {this.renderModal()}
                 </View>
             </TouchableWithoutFeedback>
         );
@@ -981,7 +865,7 @@ const mapStateToProps = (state) => ({
     balance: getBalanceForSelectedAccount(state),
     availableBalance: getAvailableBalanceForSelectedAccount(state),
     selectedAccountName: getSelectedAccountName(state),
-    selectedAccountType: getSelectedAccountType(state),
+    selectedAccountMeta: getSelectedAccountMeta(state),
     isSyncing: state.ui.isSyncing,
     isSendingTransfer: state.ui.isSendingTransfer,
     seedIndex: state.wallet.seedIndex,
@@ -989,9 +873,6 @@ const mapStateToProps = (state) => ({
     usdPrice: state.marketData.usdPrice,
     isGettingSensitiveInfoToMakeTransaction: state.keychain.isGettingSensitiveInfo.send.makeTransaction,
     theme: state.settings.theme,
-    body: state.settings.theme.body,
-    primary: state.settings.theme.primary,
-    bar: state.settings.theme.bar,
     isTransitioning: state.ui.isTransitioning,
     address: state.ui.sendAddressFieldText,
     amount: state.ui.sendAmountFieldText,
@@ -999,12 +880,11 @@ const mapStateToProps = (state) => ({
     denomination: state.ui.sendDenomination,
     activeStepIndex: state.progress.activeStepIndex,
     activeSteps: state.progress.activeSteps,
-    timeTakenByEachProgressStep: state.progress.timeTakenByEachStep,
     remotePoW: state.settings.remotePoW,
     password: state.wallet.password,
     deepLinkActive: state.wallet.deepLinkActive,
     isFingerprintEnabled: state.settings.isFingerprintEnabled,
-    isModalActive: state.ui.isModalActive,
+    isKeyboardActive: state.ui.isKeyboardActive,
 });
 
 const mapDispatchToProps = {

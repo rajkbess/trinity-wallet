@@ -9,13 +9,15 @@ export const ActionTypes = {
     SET_ONBOARDING_SEED: 'IOTA/UI/SET_ONBOARDING_SEED',
     SET_DO_NOT_MINIMISE: 'IOTA/UI/SET_DO_NOT_MINIMISE',
     TOGGLE_MODAL_ACTIVITY: 'IOTA/UI/TOGGLE_MODAL_ACTIVITY',
+    UPDATE_MODAL_PROPS: 'IOTA/UI/UPDATE_MODAL_PROPS',
     SET_LOGIN_ROUTE: 'IOTA/UI/SET_LOGIN_ROUTE',
     SET_QR_MESSAGE: 'IOTA/UI/SET_QR_MESSAGE',
     SET_QR_AMOUNT: 'IOTA/UI/SET_QR_AMOUNT',
     SET_QR_TAG: 'IOTA/UI/SET_QR_TAG',
     SET_QR_DENOMINATION: 'IOTA/UI/SET_QR_DENOMINATION',
     SET_SELECTED_QR_TAB: 'IOTA/UI/SET_SELECTED_QR_TAB',
-    FLIP_RECEIVE_CARD: 'IOTA/UI/FLIP_RECEIVE_CARD',
+    SET_ROUTE: 'IOTA/UI/SET_ROUTE',
+    SET_KEYBOARD_ACTIVITY: 'IOTA/UI/SET_KEYBOARD_ACTIVITY',
 };
 
 /**
@@ -81,17 +83,6 @@ export const setQrDenomination = (payload) => ({
 export const setSelectedQrTab = (payload) => ({
     type: ActionTypes.SET_SELECTED_QR_TAB,
     payload,
-});
-
-/**
- * Dispatch to flip card on receive page (mobile)
- *
- * @method setSelectedQrTab
- *
- * @returns {{type: {string} }}
- */
-export const flipReceiveCard = () => ({
-    type: ActionTypes.FLIP_RECEIVE_CARD,
 });
 
 /**
@@ -220,11 +211,27 @@ export const setDoNotMinimise = (payload) => {
  *
  * @method toggleModalActivity
  *
- * @returns {{type: {string} }}
+ * @returns {{type: {string}, modalContent: {string}, modalProps: {object} }}
  */
-export const toggleModalActivity = () => {
+export const toggleModalActivity = (modalContent, modalProps) => {
     return {
         type: ActionTypes.TOGGLE_MODAL_ACTIVITY,
+        modalContent,
+        modalProps,
+    };
+};
+
+/**
+ * Dispatch to update modal props
+ *
+ * @method updateModalProps
+ *
+ * @returns {{type: {string}, payload: {object} }}
+ */
+export const updateModalProps = (payload) => {
+    return {
+        type: ActionTypes.UPDATE_MODAL_PROPS,
+        payload,
     };
 };
 
@@ -239,6 +246,21 @@ export const toggleModalActivity = () => {
 export const setLoginRoute = (payload) => {
     return {
         type: ActionTypes.SET_LOGIN_ROUTE,
+        payload,
+    };
+};
+
+/**
+ * Dispatch to set the keyboard as active (mobile only)
+ *
+ * @method setKeyboardActivity
+ * @param {string} payload
+ *
+ * @returns {{type: {string}, payload: {string} }}
+ */
+export const setKeyboardActivity = (payload) => {
+    return {
+        type: ActionTypes.SET_KEYBOARD_ACTIVITY,
         payload,
     };
 };

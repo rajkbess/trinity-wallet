@@ -3,14 +3,13 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { StyleSheet, View, Text } from 'react-native';
 import { connect } from 'react-redux';
-import WithBackPressGoToHome from 'ui/components/BackPressGoToHome';
-import { width, height } from 'libs/dimensions';
+import { navigator } from 'libs/navigation';
 import Fonts from 'ui/theme/fonts';
-import OnboardingButtons from 'ui/components/OnboardingButtons';
-import DynamicStatusBar from 'ui/components/DynamicStatusBar';
-import { Icon } from 'ui/theme/icons';
+import DualFooterButtons from 'ui/components/DualFooterButtons';
+import AnimatedComponent from 'ui/components/AnimatedComponent';
+import Header from 'ui/components/Header';
 import InfoBox from 'ui/components/InfoBox';
-import GENERAL from 'ui/theme/general';
+import { Styling } from 'ui/theme/general';
 import { leaveNavigationBreadcrumb } from 'libs/bugsnag';
 
 const styles = StyleSheet.create({
@@ -20,13 +19,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     topWrapper: {
-        flex: 1.3,
+        flex: 1.6,
         alignItems: 'center',
         justifyContent: 'flex-start',
-        paddingTop: height / 16,
     },
     midWrapper: {
-        flex: 2.1,
+        flex: 1.8,
         alignItems: 'center',
         justifyContent: 'space-between',
     },
@@ -36,29 +34,29 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     subHeaderText: {
-        fontSize: GENERAL.fontSize5,
+        fontSize: Styling.fontSize5,
         fontFamily: 'SourceSansPro-Regular',
         textAlign: 'center',
         backgroundColor: 'transparent',
     },
     infoText: {
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         fontFamily: 'SourceSansPro-Light',
-        textAlign: 'left',
+        textAlign: 'center',
         backgroundColor: 'transparent',
     },
     infoTextLight: {
         fontFamily: Fonts.tertiary,
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
     },
     infoTextRegular: {
-        fontSize: GENERAL.fontSize3,
+        fontSize: Styling.fontSize3,
         backgroundColor: 'transparent',
     },
     confirmationText: {
         fontFamily: Fonts.secondary,
-        fontSize: GENERAL.fontSize4,
+        fontSize: Styling.fontSize4,
         textAlign: 'center',
         backgroundColor: 'transparent',
     },
@@ -69,8 +67,8 @@ const styles = StyleSheet.create({
  */
 class WalletResetConfirmation extends Component {
     static propTypes = {
-        /** Navigation object */
-        navigator: PropTypes.object.isRequired,
+        /** Component ID */
+        componentId: PropTypes.string.isRequired,
         /** @ignore */
         t: PropTypes.func.isRequired,
         /** @ignore */
@@ -81,7 +79,7 @@ class WalletResetConfirmation extends Component {
         super();
 
         this.goBack = this.goBack.bind(this);
-        this.requirePassword = this.requirePassword.bind(this);
+        this.navigateToPasswordConfirmation = this.navigateToPasswordConfirmation.bind(this);
     }
 
     componentDidMount() {
@@ -92,20 +90,23 @@ class WalletResetConfirmation extends Component {
      * Navigates to the provided screen
      * @param {string} url
      */
-    navigateTo(url) {
-        const { theme } = this.props;
-
-        this.props.navigator.push({
-            screen: url,
-            navigatorStyle: {
-                navBarHidden: true,
-                navBarTransparent: true,
-                topBarElevationShadowEnabled: false,
-                screenBackgroundColor: theme.body.bg,
-                drawUnderStatusBar: true,
-                statusBarColor: theme.body.bg,
+    navigateToPasswordConfirmation() {
+        const { theme: { body } } = this.props;
+        navigator.push('walletResetRequirePassword', {
+            animations: {
+                push: {
+                    enable: false,
+                },
+                pop: {
+                    enable: false,
+                },
             },
-            animated: false,
+            layout: {
+                backgroundColor: body.bg,
+            },
+            statusBar: {
+                backgroundColor: body.bg,
+            },
         });
     }
 
@@ -114,17 +115,7 @@ class WalletResetConfirmation extends Component {
      * @method goBack
      */
     goBack() {
-        this.props.navigator.pop({
-            animated: false,
-        });
-    }
-
-    /**
-     * Navigates to require password screen
-     * @method requirePassword
-     */
-    requirePassword() {
-        this.navigateTo('walletResetRequirePassword');
+        navigator.pop(this.props.componentId);
     }
 
     render() {
@@ -135,18 +126,40 @@ class WalletResetConfirmation extends Component {
 
         return (
             <View style={[styles.container, backgroundColor]}>
-                <DynamicStatusBar backgroundColor={theme.body.bg} />
                 <View style={styles.topWrapper}>
-                    <Icon name="iota" size={width / 8} color={theme.body.color} />
+                    <AnimatedComponent
+                        animationInType={['slideInRight', 'fadeIn']}
+                        animationOutType={['slideOutLeft', 'fadeOut']}
+                        delay={400}
+                    >
+                        <Header textColor={theme.body.color} />
+                    </AnimatedComponent>
                 </View>
                 <View style={styles.midWrapper}>
-                    <Text style={[styles.confirmationText, textColor]}>{t('global:continue?')}</Text>
-                    <View style={{ flex: 0.2 }} />
-                    <Text style={[styles.subHeaderText, primaryColor]}>{t('walletResetConfirmation:cannotUndo')}</Text>
-                    <View style={{ flex: 0.4 }} />
-                    <InfoBox
-                        body={theme.body}
-                        text={
+                    <AnimatedComponent
+                        animationInType={['slideInRight', 'fadeIn']}
+                        animationOutType={['slideOutLeft', 'fadeOut']}
+                        delay={300}
+                    >
+                        <Text style={[styles.confirmationText, textColor]}>{t('global:continue?')}</Text>
+                    </AnimatedComponent>
+                    <View style={{ flex: 0.1 }} />
+                    <AnimatedComponent
+                        animationInType={['slideInRight', 'fadeIn']}
+                        animationOutType={['slideOutLeft', 'fadeOut']}
+                        delay={200}
+                    >
+                        <Text style={[styles.subHeaderText, primaryColor]}>
+                            {t('walletResetConfirmation:cannotUndo')}
+                        </Text>
+                    </AnimatedComponent>
+                    <View style={{ flex: 0.35 }} />
+                    <AnimatedComponent
+                        animationInType={['slideInRight', 'fadeIn']}
+                        animationOutType={['slideOutLeft', 'fadeOut']}
+                        delay={100}
+                    >
+                        <InfoBox>
                             <Trans i18nKey="walletResetConfirmation:warning">
                                 <Text style={[styles.infoText, textColor]}>
                                     <Text style={styles.infoTextLight}>All of your wallet data including your </Text>
@@ -156,16 +169,19 @@ class WalletResetConfirmation extends Component {
                                     <Text style={styles.infoTextLight}> will be lost.</Text>
                                 </Text>
                             </Trans>
-                        }
-                    />
+                        </InfoBox>
+                    </AnimatedComponent>
+                    <View style={{ flex: 0.1 }} />
                 </View>
                 <View style={styles.bottomWrapper}>
-                    <OnboardingButtons
-                        onLeftButtonPress={this.goBack}
-                        onRightButtonPress={this.requirePassword}
-                        leftButtonText={t('global:no')}
-                        rightButtonText={t('global:yes')}
-                    />
+                    <AnimatedComponent animationInType={['fadeIn']} animationOutType={['fadeOut']} delay={0}>
+                        <DualFooterButtons
+                            onLeftButtonPress={this.goBack}
+                            onRightButtonPress={this.navigateToPasswordConfirmation}
+                            leftButtonText={t('global:no')}
+                            rightButtonText={t('global:yes')}
+                        />
+                    </AnimatedComponent>
                 </View>
             </View>
         );
@@ -176,6 +192,4 @@ const mapStateToProps = (state) => ({
     theme: state.settings.theme,
 });
 
-export default WithBackPressGoToHome()(
-    withNamespaces(['walletResetConfirmation', 'global'])(connect(mapStateToProps)(WalletResetConfirmation)),
-);
+export default withNamespaces(['walletResetConfirmation', 'global'])(connect(mapStateToProps)(WalletResetConfirmation));
