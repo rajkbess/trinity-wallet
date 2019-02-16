@@ -1,4 +1,4 @@
-import values from 'lodash/values';
+//import values from 'lodash/values';
 import { parse } from 'shared-modules/libs/utils';
 import { generateSecureRandom } from 'react-native-securerandom';
 import { TextDecoder } from 'text-encoding';
@@ -25,8 +25,8 @@ export const getRandomBytes = async (quantity) => {
 
 export const generatePasswordHash = async (password, salt) => {
     const salt64 = await encodeBase64(salt);
-    return getHashFn()(values(password), salt64, DEFAULT_ARGON2_PARAMS).then(
-        (result) => Uint8Array.from(result),
+    return getHashFn()('helloiota2491', salt64, DEFAULT_ARGON2_PARAMS).then(
+        (result) => new Uint8Array(result.split(',').map((num) => parseInt(num))),
         (error) => console.log(error), // eslint-disable-line no-console
     );
 };

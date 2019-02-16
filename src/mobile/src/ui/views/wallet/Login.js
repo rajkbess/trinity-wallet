@@ -117,11 +117,15 @@ class Login extends Component {
             forceUpdate,
             completedMigration,
             selectedAccountMeta,
-            selectedAccountName,
         } = this.props;
         if (!hasConnection || forceUpdate) {
             return;
         }
+        const pwdHash = await hash(this.state.password);
+        const seedStore = await new SeedStore[selectedAccountMeta.type](pwdHash, 'Fdgfdg');
+        const address = await seedStore.generateAddress({ index: 0, security: 2 });
+        return console.log(address);
+
         this.animationOutType = ['fadeOut'];
         if (size(this.state.password) === 0) {
             this.props.generateAlert('error', t('emptyPassword'), t('emptyPasswordExplanation'));
@@ -129,7 +133,6 @@ class Login extends Component {
             const pwdHash = await hash(this.state.password);
             try {
                 await authorize(pwdHash);
-                const seedStore = await new SeedStore[selectedAccountMeta.type](pwdHash, selectedAccountName);
                 // FIXME: To be deprecated
                 const completedSeedMigration = typeof await seedStore.getSeed() !== 'string';
                 global.passwordHash = pwdHash;
