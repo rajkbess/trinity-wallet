@@ -10,7 +10,6 @@
 		0C2504A17226DF5FFD3C2A54AD060E8A /* libBugsnagReactNative.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D9D059D1D71ADA6B83851AE04A4B1989 /* libBugsnagReactNative.a */; };
 		0C51C393ABBB0B4BD4B93D710474ACE6 /* iotaWalletUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9DBF0EEB7DBFA315A0D6839E79A5924 /* iotaWalletUITests.swift */; };
 		150B45CC76085653FBC10B5A7B4E16F0 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3AFCA4EA113044613D95E46BDAC0C1E3 /* AppDelegate.m */; };
-		1AB1A343ADD541F89F9211E6 /* libRealmReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CA53E63FD004D9AAEAE93E3 /* libRealmReact.a */; };
 		1D90A630DF083C6894C70C1D9936A0A9 /* libRCTText-tvOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F586ACB1B483D19A73242AC34185FAD /* libRCTText-tvOS.a */; };
 		227F5ECF692F599792F69DC4D573B2E6 /* libRCTActionSheet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E329CD2AEA74CC4A8A6F37DBBEF1EA5E /* libRCTActionSheet.a */; };
 		23DBCEF31158ED28593321DF /* libPods-iotaWallet-tvOSTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F94248EA7BCF6FA1B4742792 /* libPods-iotaWallet-tvOSTests.a */; };
@@ -32,7 +31,8 @@
 		6020D31E21A5077600159E5A /* libRCTAnimation.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC55639207BA79E00BA0A7F /* libRCTAnimation.a */; };
 		6020D31F21A507BC00159E5A /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC5565A207BA79E00BA0A7F /* libReact.a */; };
 		6020D32021A5080100159E5A /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC5565A207BA79E00BA0A7F /* libReact.a */; };
-		6024F33522175054005545F0 /* EntangledKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6024F33422175054005545F0 /* EntangledKit.framework */; };
+		602409DE2218B632000AE2EE /* libRealmReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 602409DD2218B5F1000AE2EE /* libRealmReact.a */; };
+		602409EC2218D1EA000AE2EE /* EntangledKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 602409EB2218D1EA000AE2EE /* EntangledKit.framework */; };
 		6056CF5520827D3C0006A2F3 /* libRNCamera.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6056CF5420827D2F0006A2F3 /* libRNCamera.a */; };
 		6079ACDE2110BE6B005B21CB /* Argon2Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6079ACDD2110BE6B005B21CB /* Argon2Core.swift */; };
 		6079ACE02110DD2C005B21CB /* Argon2IOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6079ACDF2110DD2C005B21CB /* Argon2IOS.swift */; };
@@ -253,13 +253,6 @@
 			remoteGlobalIDString = ECE344CBB22E9B14926747E3FB76B0F3;
 			remoteInfo = "third-party-tvOS";
 		};
-		60159088217BA51F00B746A8 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6BA32972BAD24F7ABBA45866 /* RealmReact.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = F60690131CA2766F0003FB26;
-			remoteInfo = RealmReact;
-		};
 		601BFCEC20C367310097D329 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 601BFCE820C367300097D329 /* RNShare.xcodeproj */;
@@ -280,6 +273,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 62CA59B71E3C173B002D7188;
 			remoteInfo = Lottie_iOS;
+		};
+		602409DC2218B5F1000AE2EE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 602409D72218B5F1000AE2EE /* RealmReact.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F60690131CA2766F0003FB26;
+			remoteInfo = RealmReact;
 		};
 		6056CF5320827D2F0006A2F3 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -718,7 +718,8 @@
 		601BFCEF20C3677E0097D329 /* Social.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Social.framework; path = System/Library/Frameworks/Social.framework; sourceTree = SDKROOT; };
 		601BFCF120C3679D0097D329 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
 		601BFD5C20C39A560097D329 /* RNViewShot.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RNViewShot.xcodeproj; path = "../node_modules/react-native-view-shot/ios/RNViewShot.xcodeproj"; sourceTree = "<group>"; };
-		6024F33422175054005545F0 /* EntangledKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = EntangledKit.framework; sourceTree = "<group>"; };
+		602409D72218B5F1000AE2EE /* RealmReact.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RealmReact.xcodeproj; path = "../node_modules/realm/react-native/ios/RealmReact.xcodeproj"; sourceTree = "<group>"; };
+		602409EB2218D1EA000AE2EE /* EntangledKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = EntangledKit.framework; sourceTree = "<group>"; };
 		6056CF4F20827D2F0006A2F3 /* RNCamera.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RNCamera.xcodeproj; path = "../node_modules/react-native-camera/ios/RNCamera.xcodeproj"; sourceTree = "<group>"; };
 		6079ACDD2110BE6B005B21CB /* Argon2Core.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Argon2Core.swift; sourceTree = "<group>"; };
 		6079ACDF2110DD2C005B21CB /* Argon2IOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Argon2IOS.swift; sourceTree = "<group>"; };
@@ -732,7 +733,6 @@
 		67EDAC9474CCB127E47DDAA9D0A40C1A /* buildnumber.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = buildnumber.xcconfig; sourceTree = "<group>"; };
 		687E262F066E4DDBCEFF44A4BC7F44A7 /* nb */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nb; path = nb.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		68D1880393EB486F98F90D04 /* RNNodeJsMobile.xcodeproj */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = "wrapper.pb-project"; name = RNNodeJsMobile.xcodeproj; path = "../node_modules/nodejs-mobile-react-native/ios/RNNodeJsMobile.xcodeproj"; sourceTree = "<group>"; };
-		6BA32972BAD24F7ABBA45866 /* RealmReact.xcodeproj */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = "wrapper.pb-project"; name = RealmReact.xcodeproj; path = "../node_modules/realm/react-native/ios/RealmReact.xcodeproj"; sourceTree = "<group>"; };
 		6EB779EC5853FB7A3F49999F69549ACA /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 		6F63CB3492A71A3A73B8764893BE0F6F /* RNFS.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RNFS.xcodeproj; path = "../node_modules/react-native-fs/RNFS.xcodeproj"; sourceTree = "<group>"; };
 		703CD715859580C6F93AD2C3B9BF240C /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
@@ -819,6 +819,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				602409DE2218B632000AE2EE /* libRealmReact.a in Frameworks */,
 				CB563C0C21C1470F00AE4437 /* libQRCode.a in Frameworks */,
 				CBDE11BF21AF008D00CA1909 /* libLottieReactNative.a in Frameworks */,
 				6020D31F21A507BC00159E5A /* libReact.a in Frameworks */,
@@ -829,8 +830,8 @@
 				CBDE11BB21AEFFFE00CA1909 /* Lottie.framework in Frameworks */,
 				601BFD6220C39A610097D329 /* libRNViewShot.a in Frameworks */,
 				601BFCF220C3679D0097D329 /* MessageUI.framework in Frameworks */,
+				602409EC2218D1EA000AE2EE /* EntangledKit.framework in Frameworks */,
 				601BFCF020C3677F0097D329 /* Social.framework in Frameworks */,
-				6024F33522175054005545F0 /* EntangledKit.framework in Frameworks */,
 				601BFCEE20C367660097D329 /* libRNShare.a in Frameworks */,
 				CBC214EA20CE82EC005D8ACB /* libRNReactNativeHapticFeedback.a in Frameworks */,
 				CB6626F52085057F00651519 /* libSplashScreen.a in Frameworks */,
@@ -861,7 +862,6 @@
 				CF626DD9FBB494210B780417 /* Pods_iotaWallet.framework in Frameworks */,
 				653C5DB7CF56434CA39B6922 /* libRNNodeJsMobile.a in Frameworks */,
 				F19CAE1462E2409387028CD1 /* NodeMobile.framework in Frameworks */,
-				1AB1A343ADD541F89F9211E6 /* libRealmReact.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1050,14 +1050,6 @@
 			path = Config;
 			sourceTree = "<group>";
 		};
-		60159085217BA51F00B746A8 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				60159089217BA51F00B746A8 /* libRealmReact.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		601BFCE920C367300097D329 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -1070,6 +1062,14 @@
 			isa = PBXGroup;
 			children = (
 				601BFD6120C39A580097D329 /* libRNViewShot.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		602409D82218B5F1000AE2EE /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				602409DD2218B5F1000AE2EE /* libRealmReact.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1137,9 +1137,9 @@
 				FF6707891F5797B0CC78F1267EB8F1A2 /* RNSVG.xcodeproj */,
 				2D84DC61092C2CB09498AB83CAA9B91F /* RNSecureRandom.xcodeproj */,
 				33AC314FF1C9CE4F19E8E899E79675B4 /* React.xcodeproj */,
+				602409D72218B5F1000AE2EE /* RealmReact.xcodeproj */,
 				78457F3624D0D3C241289BCB545E290E /* ReactNativeFingerprintScanner.xcodeproj */,
 				68D1880393EB486F98F90D04 /* RNNodeJsMobile.xcodeproj */,
-				6BA32972BAD24F7ABBA45866 /* RealmReact.xcodeproj */,
 				9B7786DA8E9F4FBCA1CD37AF /* QrCode.xcodeproj */,
 			);
 			name = Libraries;
@@ -1320,7 +1320,7 @@
 		CB86627A209F36CA00C026E3 /* EntangledIOS */ = {
 			isa = PBXGroup;
 			children = (
-				6024F33422175054005545F0 /* EntangledKit.framework */,
+				602409EB2218D1EA000AE2EE /* EntangledKit.framework */,
 				CB86627D209F36CA00C026E3 /* EntangledIOS.m */,
 				CB86627F209F36CA00C026E3 /* EntangledIOS.h */,
 			);
@@ -1731,8 +1731,8 @@
 					ProjectRef = CBEA4C8B2149481F007DA583 /* ReactNativeNavigation.xcodeproj */;
 				},
 				{
-					ProductGroup = 60159085217BA51F00B746A8 /* Products */;
-					ProjectRef = 6BA32972BAD24F7ABBA45866 /* RealmReact.xcodeproj */;
+					ProductGroup = 602409D82218B5F1000AE2EE /* Products */;
+					ProjectRef = 602409D72218B5F1000AE2EE /* RealmReact.xcodeproj */;
 				},
 				{
 					ProductGroup = 6056CF5020827D2F0006A2F3 /* Products */;
@@ -1934,13 +1934,6 @@
 			remoteRef = 5A109CA5CC18A16B6414EEC4BBD87090 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		60159089217BA51F00B746A8 /* libRealmReact.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = libRealmReact.a;
-			remoteRef = 60159088217BA51F00B746A8 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 		601BFCED20C367310097D329 /* libRNShare.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
@@ -1953,6 +1946,13 @@
 			fileType = archive.ar;
 			path = libRNViewShot.a;
 			remoteRef = 601BFD6020C39A580097D329 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		602409DD2218B5F1000AE2EE /* libRealmReact.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libRealmReact.a;
+			remoteRef = 602409DC2218B5F1000AE2EE /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		6056CF5420827D2F0006A2F3 /* libRNCamera.a */ = {

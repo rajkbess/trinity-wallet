@@ -40,20 +40,26 @@ RCT_EXPORT_METHOD(bundlePow:(NSArray *)trytes trunk:(NSString*)trunk branch:(NSS
 
 
 // Single address generation
-RCT_EXPORT_METHOD(generateAddress:(NSArray *)seed index:(int)index security:(int)security resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(generateAddress:(NSArray<NSNumber*>*)seed index:(int)index security:(int)security resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
-  int8_t seedTrits[(int)seed.count] = "";
-  for (int i = 0; i < (int)[seed count]; i++)
+  int8_t seedTrits[243];
+  int8_t* seedTrits_ptr = NULL;
+  for (int i = 0; i < (int)seed.count; i++)
   {
-      seedTrits[i] = (int8_t)seed[i];
+      seedTrits[i] = (int8_t)seed[i].charValue;
   }
-  int8_t * address = [EntangledIOSBindings iota_ios_sign_address_gen_trits:seedTrits index:index security:security];
+  seedTrits_ptr = seedTrits;
+  int8_t * address = NULL;
+  address = [EntangledIOSBindings iota_ios_sign_address_gen_trits:seedTrits_ptr index:index security:security];
   memset_s(seedTrits, strlen(seedTrits), 0, strlen(seedTrits));
+  for (int i = 0; i < 243; i++) {
+    printf("%hhd", address[i]);
+  }
   resolve([NSString stringWithFormat:@"%s", address]);
 }
 
 // Multi address generation
-RCT_EXPORT_METHOD(generateAddresses:(NSArray *)seed index:(int)index security:(int)security total:(int)total resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(generateAddresses:(NSArray<NSNumber*>*)seed index:(int)index security:(int)security total:(int)total resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
     NSMutableArray * addresses = [NSMutableArray array];
@@ -61,14 +67,17 @@ RCT_EXPORT_METHOD(generateAddresses:(NSArray *)seed index:(int)index security:(i
     int addressIndex = index;
 
 
-    int8_t seedTrits[sizeof(seed)] = "";
-    for (int i = 0; i < sizeof(seed); i++)
+    int8_t seedTrits[243];
+    int8_t* seedTrits_ptr = NULL;
+    int8_t* address = NULL;
+    
+    for (int i = 0; i < (int)seed.count; i++)
     {
-        seedTrits[i] = (int8_t)seed[i];
+        seedTrits[i] = (int8_t)seed[i].charValue;
     }
 
     do {
-      int8_t * address = [EntangledIOSBindings iota_ios_sign_address_gen_trits:seedTrits index:addressIndex security:security];
+      address = [EntangledIOSBindings iota_ios_sign_address_gen_trits:seedTrits index:addressIndex security:security];
       NSString * addressObj = [NSString stringWithFormat:@"%s", address];
       [addresses addObject:addressObj];
       i++;
